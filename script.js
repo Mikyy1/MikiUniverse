@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 /* === HERO BUTTONS === */
 document.addEventListener("DOMContentLoaded", function(){
-  const WA_LINK = "https://wa.me/6285174229436?text=Halo%20bang%20mau%20order%20edit";
+  const WA_LINK = "https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit";
 
   const topBtn = document.getElementById("goTopCustomerBtn");
   const waBtn  = document.getElementById("orderWhatsappBtn");
@@ -351,13 +351,13 @@ document.addEventListener("DOMContentLoaded", function(){
 (function(){
   const ANSWERS = {
     "berapa lama proses editnya":
-      "Estimasi proses edit biasanya 1 sampai 3 hari, tergantung antrean, durasi video, dan tingkat ribet request. Kalau cuma ringan bisa lebih cepat.",
+      "Estimasi proses edit biasanya 1 jam 30 menit sampai 2 jam, tergantung antrean, durasi video, kalau cuma req gampang bisa lebih cepat.",
     "harga cc gameplay":
-      "Harga CC Gameplay mulai dari Rp35.000. Bikin warna gameplay lebih hidup dan nggak kelihatan mentah.",
+      "Harga CC Gameplay mulai dari Rp35.000. Bikin warna gameplay jadi jernih dan HD",
     "harga order edit":
-      "Harga order edit mulai dari Rp50.000, tergantung konsep dan durasi. Edit kompleks harga menyesuaikan.",
+      "Harga order edit mulai dari Rp25.000, tergantung konsep dan durasi. Edit kompleks harga menyesuaikan.",
     "harga hd-in video":
-      "Harga HD-in video mulai dari Rp10.000 sampai Rp25.000. Tergantung kualitas source dan output yang diminta."
+      "Harga HD-in video mulai dari Rp5.000 aja. Tergantung kualitas source."
   };
 
   const QUESTIONS = [
