@@ -2,6 +2,7 @@
    MIKI UNIVERSE — AUTH & PROFILE (Firebase)
    Login Google / Email / Guest / Admin.
    Tiap user punya dokumen sendiri di Firestore: users/{uid}
+   Modal open/close logic ada di ui.js (load duluan, no dependency).
    ========================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -20,20 +21,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let currentUser = null;
-let currentProfile = null;
 let unsubProfile = null;
-let emailMode = "masuk";
-let editingProfile = false;
-let stagedAvatarDataURL = null;
 let adminFoundUid = null;
 
-/* ---------- helpers ---------- */
 function $(id) { return document.getElementById(id); }
 function escapeAttr(str) { return String(str).replace(/"/g, "&quot;"); }
-
-function openModal(id) { $(id)?.classList.add("active"); }
-function closeModal(id) { $(id)?.classList.remove("active"); }
 
 function friendlyAuthError(e) {
   const map = {
@@ -45,7 +37,9 @@ function friendlyAuthError(e) {
     "auth/invalid-email": "Format email nggak valid.",
     "auth/popup-closed-by-user": "Login dibatalkan.",
     "auth/network-request-failed": "Koneksi gagal, cek internet lu.",
-    "auth/too-many-requests": "Kebanyakan percobaan. Coba lagi nanti."
+    "auth/too-many-requests": "Kebanyakan percobaan. Coba lagi nanti.",
+    "auth/invalid-api-key": "Config Firebase belum bener. Cek firebase-config.js.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Config Firebase belum bener. Cek firebase-config.js."
   };
   return map[e?.code] || (e?.message || "Terjadi kesalahan, coba lagi.");
 }
@@ -107,9 +101,9 @@ async function ensureUserDoc(user, opts = {}) {
   return data;
 }
 
-/* ---------- auth state ---------- */
+/* ---------- auth state (kept in sync with window.__mikiAuthState for ui.js) ---------- */
 onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
+  window.__mikiAuthState.currentUser = user;
   if (unsubProfile) { unsubProfile(); unsubProfile = null; }
 
   if (user) {
@@ -123,13 +117,13 @@ onAuthStateChanged(auth, async (user) => {
     }
     unsubProfile = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        currentProfile = snap.data();
+        window.__mikiAuthState.currentProfile = snap.data();
         renderHeaderAccount();
         if ($("profileModal")?.classList.contains("active")) renderProfileModal();
       }
     });
   } else {
-    currentProfile = null;
+    window.__mikiAuthState.currentProfile = null;
     renderHeaderAccount();
   }
 });
@@ -138,6 +132,7 @@ onAuthStateChanged(auth, async (user) => {
 function renderHeaderAccount() {
   const btn = $("accountBtn");
   if (!btn) return;
+  const { currentUser, currentProfile } = window.__mikiAuthState;
   if (currentUser && currentProfile && currentProfile.photoURL) {
     btn.classList.add("has-avatar");
     btn.innerHTML = `<img class="account-btn-avatar-img" src="${escapeAttr(currentProfile.photoURL)}" alt="">`;
@@ -147,101 +142,9 @@ function renderHeaderAccount() {
   }
 }
 
-function onAccountBtnClick() {
-  if (currentUser) openProfileModal();
-  else openAuthModal();
-}
-
-/* ---------- auth modal ---------- */
-function openAuthModal() {
-  ["googleAuthError", "emailAuthError", "guestAuthError", "adminAuthError"].forEach(id => { if ($(id)) $(id).textContent = ""; });
-  openModal("authModal");
-}
-function closeAuthModal() { closeModal("authModal"); }
-
-function switchAuthTab(tab) {
-  document.querySelectorAll(".auth-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  document.querySelectorAll(".auth-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === tab));
-}
-
-function switchEmailMode(mode) {
-  emailMode = mode;
-  document.querySelectorAll(".auth-subtab").forEach(b => b.classList.toggle("active", b.dataset.sub === mode));
-  $("emailNicknameField").style.display = mode === "daftar" ? "flex" : "none";
-  $("emailSubmitBtn").textContent = mode === "daftar" ? "Daftar" : "Masuk";
-  $("emailAuthError").textContent = "";
-}
-
-async function loginGoogle() {
-  const errEl = $("googleAuthError");
-  errEl.textContent = "";
-  try {
-    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-    await ensureUserDoc(cred.user, { provider: "google" });
-    closeAuthModal();
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
-  }
-}
-
-async function submitEmailAuth() {
-  const email = $("emailInput").value.trim();
-  const password = $("passwordInput").value;
-  const errEl = $("emailAuthError");
-  errEl.textContent = "";
-  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
-  if (password.length < 6) { errEl.textContent = "Password minimal 6 karakter."; return; }
-  try {
-    if (emailMode === "daftar") {
-      const nickname = $("emailNickname").value.trim() || email.split("@")[0];
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      try { await updateProfile(cred.user, { displayName: nickname }); } catch (_) {}
-      await ensureUserDoc(cred.user, { provider: "email", displayNameOverride: nickname });
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
-    closeAuthModal();
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
-  }
-}
-
-async function loginGuest() {
-  const errEl = $("guestAuthError");
-  errEl.textContent = "";
-  try {
-    const cred = await signInAnonymously(auth);
-    await ensureUserDoc(cred.user, { provider: "guest" });
-    closeAuthModal();
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
-  }
-}
-
-async function submitAdminLogin() {
-  const email = $("adminEmailInput").value.trim();
-  const password = $("adminPasswordInput").value;
-  const errEl = $("adminAuthError");
-  errEl.textContent = "";
-  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
-  try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const profile = await ensureUserDoc(cred.user, { provider: "email" });
-    if (profile.role !== "admin") {
-      await signOut(auth);
-      errEl.textContent = "Akun ini bukan admin.";
-      return;
-    }
-    closeAuthModal();
-    openProfileModal();
-    setTimeout(openAdminPanel, 250);
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
-  }
-}
-
-/* ---------- profile modal ---------- */
+/* ---------- profile modal rendering (called by ui.js too) ---------- */
 function renderProfileModal() {
+  const { currentUser, currentProfile } = window.__mikiAuthState;
   if (!currentUser || !currentProfile) return;
 
   const img = $("profileAvatarImg");
@@ -276,31 +179,81 @@ function renderProfileModal() {
 
   $("profileError").textContent = "";
 }
+window.__mikiRenderProfileModal = renderProfileModal;
 
-function openProfileModal() { renderProfileModal(); openModal("profileModal"); }
-function closeProfileModal() { closeModal("profileModal"); cancelProfileEdit(); }
-
-function toggleProfileEdit() {
-  editingProfile = !editingProfile;
-  $("profileNameView").style.display = editingProfile ? "none" : "block";
-  $("profileNameInput").style.display = editingProfile ? "block" : "none";
-  $("profileAvatarEditBtn").style.display = editingProfile ? "flex" : "none";
-  $("profileEditBtn").style.display = editingProfile ? "none" : "block";
-  $("profileSaveBtn").style.display = editingProfile ? "block" : "none";
-  if (!editingProfile) { stagedAvatarDataURL = null; renderProfileModal(); }
+/* ---------- Google ---------- */
+async function loginGoogle() {
+  const errEl = $("googleAuthError");
+  errEl.textContent = "";
+  try {
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    await ensureUserDoc(cred.user, { provider: "google" });
+    closeAuthModal();
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e);
+  }
 }
 
-function cancelProfileEdit() {
-  if (!editingProfile) return;
-  editingProfile = false;
-  stagedAvatarDataURL = null;
-  $("profileNameView").style.display = "block";
-  $("profileNameInput").style.display = "none";
-  $("profileAvatarEditBtn").style.display = "none";
-  $("profileEditBtn").style.display = "block";
-  $("profileSaveBtn").style.display = "none";
+/* ---------- Email (masuk/daftar, mode dibaca dari ui.js) ---------- */
+async function submitEmailAuth() {
+  const email = $("emailInput").value.trim();
+  const password = $("passwordInput").value;
+  const errEl = $("emailAuthError");
+  errEl.textContent = "";
+  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
+  if (password.length < 6) { errEl.textContent = "Password minimal 6 karakter."; return; }
+  try {
+    if (window.__mikiEmailMode === "daftar") {
+      const nickname = $("emailNickname").value.trim() || email.split("@")[0];
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      try { await updateProfile(cred.user, { displayName: nickname }); } catch (_) {}
+      await ensureUserDoc(cred.user, { provider: "email", displayNameOverride: nickname });
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+    closeAuthModal();
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e);
+  }
 }
 
+/* ---------- Guest ---------- */
+async function loginGuest() {
+  const errEl = $("guestAuthError");
+  errEl.textContent = "";
+  try {
+    const cred = await signInAnonymously(auth);
+    await ensureUserDoc(cred.user, { provider: "guest" });
+    closeAuthModal();
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e);
+  }
+}
+
+/* ---------- Admin login ---------- */
+async function submitAdminLogin() {
+  const email = $("adminEmailInput").value.trim();
+  const password = $("adminPasswordInput").value;
+  const errEl = $("adminAuthError");
+  errEl.textContent = "";
+  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const profile = await ensureUserDoc(cred.user, { provider: "email" });
+    if (profile.role !== "admin") {
+      await signOut(auth);
+      errEl.textContent = "Akun ini bukan admin.";
+      return;
+    }
+    closeAuthModal();
+    openProfileModal();
+    setTimeout(openAdminPanel, 250);
+  } catch (e) {
+    errEl.textContent = friendlyAuthError(e);
+  }
+}
+
+/* ---------- avatar upload + save profile ---------- */
 async function onAvatarFileChange(event) {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -308,7 +261,7 @@ async function onAvatarFileChange(event) {
   errEl.textContent = "";
   try {
     const dataUrl = await compressImageToDataURL(file, 256, 0.72);
-    stagedAvatarDataURL = dataUrl;
+    window.__mikiStagedAvatar = dataUrl;
     $("profileAvatarImg").src = dataUrl;
     $("profileAvatarImg").style.display = "block";
     $("profileAvatarFallback").style.display = "none";
@@ -318,6 +271,7 @@ async function onAvatarFileChange(event) {
 }
 
 async function saveProfile() {
+  const { currentUser } = window.__mikiAuthState;
   if (!currentUser) return;
   const errEl = $("profileError");
   errEl.textContent = "";
@@ -326,10 +280,10 @@ async function saveProfile() {
   if (newName.length > 24) { errEl.textContent = "Nickname maksimal 24 karakter."; return; }
   try {
     const updates = { displayName: newName, updatedAt: serverTimestamp() };
-    if (stagedAvatarDataURL) updates.photoURL = stagedAvatarDataURL;
+    if (window.__mikiStagedAvatar) updates.photoURL = window.__mikiStagedAvatar;
     await updateDoc(doc(db, "users", currentUser.uid), updates);
     try { await updateProfile(currentUser, { displayName: newName }); } catch (_) {}
-    stagedAvatarDataURL = null;
+    window.__mikiStagedAvatar = null;
     toggleProfileEdit();
   } catch (e) {
     errEl.textContent = "Gagal simpan. Coba lagi.";
@@ -339,21 +293,13 @@ async function saveProfile() {
 async function logoutUser() {
   try {
     await signOut(auth);
-    closeModal("profileModal");
-    closeModal("adminModal");
+    closeModalSafe("profileModal");
+    closeModalSafe("adminModal");
   } catch (_) {}
 }
+function closeModalSafe(id) { $(id)?.classList.remove("active"); }
 
 /* ---------- admin panel ---------- */
-function openAdminPanel() {
-  if (currentProfile?.role !== "admin") return;
-  closeModal("profileModal");
-  $("adminResultBox").style.display = "none";
-  $("adminSearchError").textContent = "";
-  openModal("adminModal");
-}
-function closeAdminModal() { closeModal("adminModal"); }
-
 async function adminSearchUser() {
   const email = $("adminSearchEmail").value.trim();
   const errEl = $("adminSearchError");
@@ -389,11 +335,11 @@ async function adminSaveTitle() {
   const title = $("adminTitleInput").value.trim();
   try {
     await updateDoc(doc(db, "users", adminFoundUid), { title: title || null, updatedAt: serverTimestamp() });
-    errEl.textContent = "";
     errEl.style.color = "#22c55e";
     errEl.textContent = "Title berhasil disimpan.";
     setTimeout(() => { errEl.textContent = ""; errEl.style.color = ""; }, 2500);
   } catch (e) {
+    errEl.style.color = "";
     errEl.textContent = "Gagal simpan title. Cek Firestore Rules lu.";
   }
 }
@@ -412,19 +358,12 @@ async function adminToggleRole() {
   }
 }
 
-/* ---------- close modal on backdrop click ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-  ["authModal", "profileModal", "adminModal"].forEach(id => {
-    const el = $(id);
-    if (el) el.addEventListener("click", (e) => { if (e.target === el) closeModal(id); });
-  });
-});
-
-/* ---------- expose to inline onclick= handlers ---------- */
+/* ---------- overwrite ui.js placeholders now that Firebase is ready ---------- */
 Object.assign(window, {
-  onAccountBtnClick, closeAuthModal, switchAuthTab, switchEmailMode,
   loginGoogle, submitEmailAuth, loginGuest, submitAdminLogin,
-  closeProfileModal, toggleProfileEdit, onAvatarFileChange, saveProfile,
-  openAdminPanel, closeAdminModal, adminSearchUser, adminSaveTitle, adminToggleRole,
+  onAvatarFileChange, saveProfile,
+  adminSearchUser, adminSaveTitle, adminToggleRole,
   logoutUser
 });
+
+console.log("[Miki Auth] Firebase siap & nyambung.");
