@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script>
+/* ===== TEMPORARY DEBUG BANNER — hapus ini setelah bug login ketemu ===== */
+window.addEventListener('error', function(e){
+  showMikiDebugBanner('JS Error: ' + (e.message || 'unknown') + '\n@ ' + (e.filename||'?') + ':' + (e.lineno||'?'));
+});
+window.addEventListener('unhandledrejection', function(e){
+  var r = e.reason;
+  showMikiDebugBanner('Promise Error: ' + (r && (r.message || r.code || r) || 'unknown'));
+});
+function showMikiDebugBanner(msg){
+  var el = document.getElementById('mikiDebugBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'mikiDebugBanner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;word-break:break-word;max-height:45vh;overflow-y:auto;';
+    document.documentElement.appendChild(el);
+  }
+  var line = document.createElement('div');
+  line.style.cssText = 'margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:6px;white-space:pre-wrap;';
+  line.textContent = msg;
+  el.appendChild(line);
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Miki Edit - Top Langganan</title>
@@ -508,9 +531,9 @@
   </a>
 </div>
 
-<script src="data.js"></script>
-<script src="script.js"></script>
-<script src="ui.js"></script>
-<script type="module" src="auth.js"></script>
+<script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
 </body>
 </html>
