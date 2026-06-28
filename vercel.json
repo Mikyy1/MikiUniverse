@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    { "source": "/index.html", "destination": "/home", "permanent": true },
+    { "source": "/testi.html", "destination": "/testi", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/testi", "destination": "/testi.html" }
+  ]
+}

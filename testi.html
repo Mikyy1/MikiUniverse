@@ -83,14 +83,14 @@ function showMikiDebugBanner(msg){
 </div>
 
 <header>
-  <a class="logo logo-img" href="index.html">
+  <a class="logo logo-img" href="/">
     <img src="assets/miki-universe-logo.png" alt="Miki Universe Logo">
   </a>
   <nav>
-    <a href="index.html#top" data-i18n="headerNavTop">Top</a>
-    <a href="index.html#service" data-i18n="headerNavService">Service</a>
-    <a href="index.html#why-order" data-i18n="headerNavWhy">Why</a>
-    <a href="index.html#contact" data-i18n="headerNavSocial">Social</a>
+    <a href="/#top" data-i18n="headerNavTop">Top</a>
+    <a href="/#service" data-i18n="headerNavService">Service</a>
+    <a href="/#why-order" data-i18n="headerNavWhy">Why</a>
+    <a href="/#contact" data-i18n="headerNavSocial">Social</a>
   </nav>
   <div class="header-actions">
     <button class="lang-btn" type="button" onclick="toggleLangMenu()">
@@ -211,22 +211,6 @@ function showMikiDebugBanner(msg){
 
     <p class="auth-error" id="profileError"></p>
 
-    <div class="profile-rating-section">
-      <div class="profile-rating-divider"></div>
-      <p class="profile-rating-label">Kasih rating buat jasa edit Miki Universe</p>
-      <div class="rating-stars-input" id="ratingStarsInput">
-        <button type="button" class="rating-star-btn" data-star="1" onclick="selectRatingStar(1)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
-        <button type="button" class="rating-star-btn" data-star="2" onclick="selectRatingStar(2)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
-        <button type="button" class="rating-star-btn" data-star="3" onclick="selectRatingStar(3)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
-        <button type="button" class="rating-star-btn" data-star="4" onclick="selectRatingStar(4)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
-        <button type="button" class="rating-star-btn" data-star="5" onclick="selectRatingStar(5)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
-      </div>
-      <textarea class="rating-comment-input" id="ratingCommentInput" placeholder="Komentar (opsional)..." maxlength="200" rows="2"></textarea>
-      <p class="auth-error" id="ratingError"></p>
-      <button class="btn rating-submit-btn" type="button" id="ratingSubmitBtn" onclick="submitRating()">Kirim Rating</button>
-      <p class="rating-submitted-note" id="ratingSubmittedNote" style="display:none">✓ Rating lu tersimpan, bisa diubah kapan aja.</p>
-    </div>
-
     <div class="profile-actions">
       <button class="btn profile-edit-btn" id="profileEditBtn" type="button" onclick="toggleProfileEdit()">
         <svg class="icon" aria-hidden="true"><use href="#icon-pencil"></use></svg> Edit Profil
@@ -285,15 +269,6 @@ function showMikiDebugBanner(msg){
 <section class="hero page-hero testi-hero-clean">
   <h1 data-page-title>Testi Order</h1>
   <p data-page-desc>Kumpulan bukti order dari customer Miki Universe</p>
-</section>
-
-<section class="rating-section" id="ratingSection">
-  <div class="rating-summary">
-    <div class="rating-summary-score" id="ratingAvgScore">-</div>
-    <div class="rating-summary-stars" id="ratingAvgStars"></div>
-    <div class="rating-summary-count" id="ratingCount">Belum ada rating</div>
-  </div>
-  <div class="rating-list" id="ratingList"></div>
 </section>
 
 <section id="testi-list" class="single-testi-section">
@@ -360,11 +335,11 @@ function showMikiDebugBanner(msg){
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <a href="index.html#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
-  <a href="index.html#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
-  <a href="index.html" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
-  <a href="index.html#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
-  <a href="testi.html" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg><span data-i18n="navTesti">Testi</span></a>
+  <a href="/#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
+  <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
+  <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
+  <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
+  <a href="/testi" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg><span data-i18n="navTesti">Testi</span></a>
 </div>
 
 <!-- MIKI AI CHAT — harus di dalam body, bukan head -->
