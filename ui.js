@@ -96,7 +96,8 @@ const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman
 [
   "loginGoogle", "submitEmailAuth", "loginGuest", "submitAdminLogin",
   "onAvatarFileChange", "saveProfile", "adminSearchUser", "adminSaveTitle",
-  "adminToggleRole", "logoutUser"
+  "adminToggleRole", "adminTogglePremium", "logoutUser", "submitRating",
+  "selectRatingStar"
 ].forEach(name => {
   window[name] = function () { alert(MIKI_FIREBASE_NOT_READY); };
 });
@@ -106,4 +107,9 @@ Object.assign(window, {
   onAccountBtnClick, openAuthModal, closeAuthModal, switchAuthTab, switchEmailMode,
   openProfileModal, closeProfileModal, openAdminPanel, closeAdminModal,
   toggleProfileEdit, cancelProfileEdit
+});
+
+/* ---------- Enchant Foto AI — sementara di-pause, placeholder doang ---------- */
+["openEnchantModal", "closeEnchantModal", "selectEnchantTier", "generateEnchant"].forEach(name => {
+  window[name] = function () { alert("Fitur Enchant Foto AI lagi disiapin, coming soon!"); };
 });

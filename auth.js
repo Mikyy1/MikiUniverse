@@ -26,6 +26,14 @@ let adminFoundUid = null;
 
 function $(id) { return document.getElementById(id); }
 function escapeAttr(str) { return String(str).replace(/"/g, "&quot;"); }
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function friendlyAuthError(e) {
   const map = {
@@ -125,6 +133,7 @@ onAuthStateChanged(auth, async (user) => {
   } else {
     window.__mikiAuthState.currentProfile = null;
     renderHeaderAccount();
+    resetRatingWidget();
   }
 });
 
@@ -177,9 +186,150 @@ function renderProfileModal() {
   roleBadge.style.display = isAdmin ? "flex" : "none";
   adminBtn.style.display = isAdmin ? "block" : "none";
 
+  const premiumBadge = $("profilePremiumBadge");
+  if (premiumBadge) premiumBadge.style.display = currentProfile.premium ? "flex" : "none";
+
   $("profileError").textContent = "";
 }
-window.__mikiRenderProfileModal = renderProfileModal;
+function renderProfileModalWithRating() {
+  renderProfileModal();
+  loadMyRating();
+}
+window.__mikiRenderProfileModal = renderProfileModalWithRating;
+
+/* ---------- ratings (kasih & tampilin rating jasa edit) ---------- */
+let selectedRatingStars = 0;
+let myExistingRating = null;
+let unsubPublicRatings = null;
+
+function renderRatingStarsUI(count) {
+  document.querySelectorAll("#ratingStarsInput .rating-star-btn").forEach((btn) => {
+    const n = parseInt(btn.dataset.star, 10);
+    btn.classList.toggle("active", n <= count);
+  });
+}
+
+function selectRatingStar(n) {
+  selectedRatingStars = n;
+  renderRatingStarsUI(n);
+}
+
+function resetRatingWidget() {
+  selectedRatingStars = 0;
+  myExistingRating = null;
+  renderRatingStarsUI(0);
+  const commentEl = $("ratingCommentInput");
+  if (commentEl) commentEl.value = "";
+  const note = $("ratingSubmittedNote");
+  if (note) note.style.display = "none";
+  const errEl = $("ratingError");
+  if (errEl) errEl.textContent = "";
+}
+
+async function loadMyRating() {
+  const { currentUser } = window.__mikiAuthState;
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, "ratings", currentUser.uid));
+    const commentEl = $("ratingCommentInput");
+    const note = $("ratingSubmittedNote");
+    if (snap.exists()) {
+      myExistingRating = snap.data();
+      selectedRatingStars = myExistingRating.stars || 0;
+      renderRatingStarsUI(selectedRatingStars);
+      if (commentEl) commentEl.value = myExistingRating.comment || "";
+      if (note) note.style.display = "block";
+    } else {
+      myExistingRating = null;
+      selectedRatingStars = 0;
+      renderRatingStarsUI(0);
+      if (commentEl) commentEl.value = "";
+      if (note) note.style.display = "none";
+    }
+  } catch (_) {}
+}
+
+async function submitRating() {
+  const { currentUser, currentProfile } = window.__mikiAuthState;
+  const errEl = $("ratingError");
+  if (errEl) errEl.textContent = "";
+  if (!currentUser) { if (errEl) errEl.textContent = "Login dulu buat kasih rating."; return; }
+  if (selectedRatingStars < 1) { if (errEl) errEl.textContent = "Pilih bintangnya dulu."; return; }
+  const comment = ($("ratingCommentInput")?.value || "").trim().slice(0, 200);
+  try {
+    await setDoc(doc(db, "ratings", currentUser.uid), {
+      uid: currentUser.uid,
+      displayName: currentProfile?.displayName || "User",
+      photoURL: currentProfile?.photoURL || "",
+      stars: selectedRatingStars,
+      comment,
+      createdAt: myExistingRating?.createdAt || serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    const note = $("ratingSubmittedNote");
+    if (note) note.style.display = "block";
+  } catch (e) {
+    if (errEl) errEl.textContent = "Gagal kirim rating. Coba lagi.";
+  }
+}
+
+function renderStarsHtml(count, max = 5) {
+  let html = "";
+  for (let i = 1; i <= max; i++) {
+    html += `<svg class="icon rating-static-star${i <= count ? " filled" : ""}" aria-hidden="true"><use href="#icon-star"></use></svg>`;
+  }
+  return html;
+}
+
+function subscribePublicRatings() {
+  const listEl = $("ratingList");
+  const heroBadge = $("heroRatingBadge");
+  if (!listEl && !heroBadge) return;
+
+  if (unsubPublicRatings) unsubPublicRatings();
+  unsubPublicRatings = onSnapshot(collection(db, "ratings"), (snap) => {
+    const ratings = [];
+    snap.forEach((d) => ratings.push(d.data()));
+    ratings.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+
+    const count = ratings.length;
+    const avg = count ? ratings.reduce((s, r) => s + (r.stars || 0), 0) / count : 0;
+
+    if (heroBadge) {
+      if (count > 0) {
+        $("heroRatingText").textContent = `${avg.toFixed(1)} dari ${count} review`;
+        heroBadge.style.display = "flex";
+      } else {
+        heroBadge.style.display = "none";
+      }
+    }
+
+    if (listEl) {
+      $("ratingAvgScore").textContent = count ? avg.toFixed(1) : "-";
+      $("ratingAvgStars").innerHTML = renderStarsHtml(Math.round(avg));
+      $("ratingCount").textContent = count
+        ? `Dari ${count} review customer`
+        : "Belum ada rating, jadi yang pertama!";
+
+      listEl.innerHTML = ratings.slice(0, 50).map((r) => `
+        <div class="rating-card">
+          <div class="rating-card-head">
+            ${r.photoURL
+              ? `<img src="${escapeAttr(r.photoURL)}" alt="">`
+              : `<div class="rating-card-avatar-fallback"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg></div>`}
+            <div>
+              <div class="rating-card-name">${escapeHtml(r.displayName || "User")}</div>
+              <div class="rating-card-stars">${renderStarsHtml(r.stars || 0)}</div>
+            </div>
+          </div>
+          ${r.comment ? `<p class="rating-card-comment">${escapeHtml(r.comment)}</p>` : ""}
+        </div>
+      `).join("");
+    }
+  });
+}
+
+subscribePublicRatings();
 
 /* ---------- Google ---------- */
 async function loginGoogle() {
@@ -323,6 +473,8 @@ async function adminSearchUser() {
     $("adminTitleInput").value = data.title || "";
     $("adminRoleStatus").textContent = "Role: " + (data.role || "user");
     $("adminRoleBtn").textContent = data.role === "admin" ? "Cabut Admin" : "Jadikan Admin";
+    $("adminPremiumStatus").textContent = "Premium: " + (data.premium ? "ya" : "tidak");
+    $("adminPremiumBtn").textContent = data.premium ? "Cabut Premium" : "Aktifkan Premium";
     box.style.display = "flex";
   } catch (e) {
     errEl.textContent = "Gagal cari user. Cek Firestore Rules / koneksi lu.";
@@ -358,12 +510,27 @@ async function adminToggleRole() {
   }
 }
 
+async function adminTogglePremium() {
+  if (!adminFoundUid) return;
+  const statusEl = $("adminPremiumStatus");
+  const btn = $("adminPremiumBtn");
+  const makingPremium = btn.textContent === "Aktifkan Premium";
+  try {
+    await updateDoc(doc(db, "users", adminFoundUid), { premium: makingPremium, updatedAt: serverTimestamp() });
+    statusEl.textContent = "Premium: " + (makingPremium ? "ya" : "tidak");
+    btn.textContent = makingPremium ? "Cabut Premium" : "Aktifkan Premium";
+  } catch (e) {
+    alert("Gagal ubah status premium. Cek Firestore Rules lu.");
+  }
+}
+
 /* ---------- overwrite ui.js placeholders now that Firebase is ready ---------- */
 Object.assign(window, {
   loginGoogle, submitEmailAuth, loginGuest, submitAdminLogin,
   onAvatarFileChange, saveProfile,
-  adminSearchUser, adminSaveTitle, adminToggleRole,
-  logoutUser
+  adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
+  logoutUser,
+  selectRatingStar, submitRating
 });
 
 console.log("[Miki Auth] Firebase siap & nyambung.");

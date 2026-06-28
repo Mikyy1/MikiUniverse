@@ -66,6 +66,7 @@ function showMikiDebugBanner(msg){
 <symbol id="icon-crown" viewBox="0 0 24 24"><path d="M3 9l4 3 5-6 5 6 4-3-2 10H5L3 9z" fill="currentColor"/></symbol>
 <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 2 20 5.2V11c0 6-3.6 9.6-8 11-4.4-1.4-8-5-8-11V5.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
 <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 00-1 1v14a1 1 0 001 1h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="icon-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></symbol>
 </svg>
 
 <div class="particle-bg">
@@ -196,7 +197,27 @@ function showMikiDebugBanner(msg){
       <svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg> Admin
     </div>
 
+    <div class="profile-premium-badge" id="profilePremiumBadge" style="display:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-crown"></use></svg> Premium Member
+    </div>
+
     <p class="auth-error" id="profileError"></p>
+
+    <div class="profile-rating-section">
+      <div class="profile-rating-divider"></div>
+      <p class="profile-rating-label">Kasih rating buat jasa edit Miki Universe</p>
+      <div class="rating-stars-input" id="ratingStarsInput">
+        <button type="button" class="rating-star-btn" data-star="1" onclick="selectRatingStar(1)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="2" onclick="selectRatingStar(2)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="3" onclick="selectRatingStar(3)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="4" onclick="selectRatingStar(4)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="5" onclick="selectRatingStar(5)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+      </div>
+      <textarea class="rating-comment-input" id="ratingCommentInput" placeholder="Komentar (opsional)..." maxlength="200" rows="2"></textarea>
+      <p class="auth-error" id="ratingError"></p>
+      <button class="btn rating-submit-btn" type="button" id="ratingSubmitBtn" onclick="submitRating()">Kirim Rating</button>
+      <p class="rating-submitted-note" id="ratingSubmittedNote" style="display:none">✓ Rating lu tersimpan, bisa diubah kapan aja.</p>
+    </div>
 
     <div class="profile-actions">
       <button class="btn profile-edit-btn" id="profileEditBtn" type="button" onclick="toggleProfileEdit()">
@@ -243,6 +264,11 @@ function showMikiDebugBanner(msg){
         <span id="adminRoleStatus">Role: user</span>
         <button class="btn admin-role-btn" type="button" id="adminRoleBtn" onclick="adminToggleRole()">Jadikan Admin</button>
       </div>
+
+      <div class="admin-role-row">
+        <span id="adminPremiumStatus">Premium: tidak</span>
+        <button class="btn admin-premium-btn" type="button" id="adminPremiumBtn" onclick="adminTogglePremium()">Aktifkan Premium</button>
+      </div>
     </div>
   </div>
 </div>
@@ -252,6 +278,11 @@ function showMikiDebugBanner(msg){
 <section class="hero">
   <h1 data-i18n-html="heroTitle">Top Langganan<br>Edit Miki</h1>
   <p data-i18n="heroDesc">Website khusus buat nampilin customer yang paling sering edit. Karena repeat order lebih setia daripada manusia yang bilang "aku ga bakal berubah".</p>
+
+  <a class="hero-rating-badge" id="heroRatingBadge" href="testi.html" style="display:none">
+    <svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg>
+    <span id="heroRatingText">-</span>
+  </a>
 
   <div class="buttons">
     <button id="goTopCustomerBtn" class="btn hero-action-btn" type="button" data-i18n="btnTop">🔥 Lihat Top Langganan</button>
@@ -498,6 +529,70 @@ function showMikiDebugBanner(msg){
           <span>Langsung chat admin via WhatsApp.</span>
         </div>
       </a>
+      <button class="clean-more-card" type="button" onclick="closeMorePopup(); openEnchantModal();">
+        <span class="icon-box enchant-icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
+        <div>
+          <h3>Enchant Foto AI <span class="premium-pill">Premium</span></h3>
+          <span>Perbesar & perhalus foto pakai AI — HD, HD+, UHD.</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ENCHANT FOTO AI MODAL -->
+<div class="popup-overlay" id="enchantModal">
+  <div class="popup-box enchant-box">
+    <button class="popup-close" onclick="closeEnchantModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+    <h2><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg> Enchant Foto AI</h2>
+    <p>Perbesar resolusi & perhalus detail foto pakai AI.</p>
+
+    <div id="enchantLockedView">
+      <div class="enchant-locked-box">
+        <svg class="icon" aria-hidden="true"><use href="#icon-crown"></use></svg>
+        <h3>Khusus Member Premium</h3>
+        <p>Upgrade buat generate enhance foto sepuasnya, nggak ada batas.</p>
+        <a class="btn enchant-upgrade-btn" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20upgrade%20Premium%20Enchant%20Foto%20AI" target="_blank">
+          <svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg> Upgrade ke Premium
+        </a>
+      </div>
+    </div>
+
+    <div id="enchantUnlockedView" style="display:none">
+      <div class="enchant-upload-area" id="enchantUploadArea" onclick="document.getElementById('enchantFileInput').click()">
+        <img id="enchantPreviewImg" style="display:none" alt="">
+        <div id="enchantUploadHint">
+          <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
+          <span>Ketuk buat pilih foto</span>
+        </div>
+      </div>
+      <input type="file" id="enchantFileInput" accept="image/*" style="display:none" onchange="onEnchantFileChange(event)">
+
+      <div class="enchant-tiers">
+        <button class="enchant-tier active" type="button" data-tier="hd" onclick="selectEnchantTier('hd')">
+          <b>HD</b><span>2x Upscale</span>
+        </button>
+        <button class="enchant-tier" type="button" data-tier="hdplus" onclick="selectEnchantTier('hdplus')">
+          <b>HD+</b><span>4x + Wajah</span>
+        </button>
+        <button class="enchant-tier" type="button" data-tier="uhd" onclick="selectEnchantTier('uhd')">
+          <b>UHD AI</b><span>6x + Wajah</span>
+        </button>
+      </div>
+
+      <p class="auth-error" id="enchantError"></p>
+
+      <button class="btn enchant-generate-btn" type="button" id="enchantGenerateBtn" onclick="generateEnchant()">
+        <svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg>
+        <span id="enchantGenerateLabel">Generate</span>
+      </button>
+
+      <div class="enchant-result" id="enchantResultBox" style="display:none">
+        <img id="enchantResultImg" alt="Hasil enchant">
+        <a class="btn enchant-download-btn" id="enchantDownloadBtn" download="enchant-hasil.jpg">
+          <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg> Download Hasil
+        </a>
+      </div>
     </div>
   </div>
 </div>

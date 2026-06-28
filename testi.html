@@ -73,6 +73,7 @@ function showMikiDebugBanner(msg){
 <symbol id="icon-crown" viewBox="0 0 24 24"><path d="M3 9l4 3 5-6 5 6 4-3-2 10H5L3 9z" fill="currentColor"/></symbol>
 <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 2 20 5.2V11c0 6-3.6 9.6-8 11-4.4-1.4-8-5-8-11V5.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
 <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 00-1 1v14a1 1 0 001 1h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="icon-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></symbol>
 </svg>
 
 
@@ -204,7 +205,27 @@ function showMikiDebugBanner(msg){
       <svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg> Admin
     </div>
 
+    <div class="profile-premium-badge" id="profilePremiumBadge" style="display:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-crown"></use></svg> Premium Member
+    </div>
+
     <p class="auth-error" id="profileError"></p>
+
+    <div class="profile-rating-section">
+      <div class="profile-rating-divider"></div>
+      <p class="profile-rating-label">Kasih rating buat jasa edit Miki Universe</p>
+      <div class="rating-stars-input" id="ratingStarsInput">
+        <button type="button" class="rating-star-btn" data-star="1" onclick="selectRatingStar(1)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="2" onclick="selectRatingStar(2)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="3" onclick="selectRatingStar(3)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="4" onclick="selectRatingStar(4)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+        <button type="button" class="rating-star-btn" data-star="5" onclick="selectRatingStar(5)"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></button>
+      </div>
+      <textarea class="rating-comment-input" id="ratingCommentInput" placeholder="Komentar (opsional)..." maxlength="200" rows="2"></textarea>
+      <p class="auth-error" id="ratingError"></p>
+      <button class="btn rating-submit-btn" type="button" id="ratingSubmitBtn" onclick="submitRating()">Kirim Rating</button>
+      <p class="rating-submitted-note" id="ratingSubmittedNote" style="display:none">✓ Rating lu tersimpan, bisa diubah kapan aja.</p>
+    </div>
 
     <div class="profile-actions">
       <button class="btn profile-edit-btn" id="profileEditBtn" type="button" onclick="toggleProfileEdit()">
@@ -251,6 +272,11 @@ function showMikiDebugBanner(msg){
         <span id="adminRoleStatus">Role: user</span>
         <button class="btn admin-role-btn" type="button" id="adminRoleBtn" onclick="adminToggleRole()">Jadikan Admin</button>
       </div>
+
+      <div class="admin-role-row">
+        <span id="adminPremiumStatus">Premium: tidak</span>
+        <button class="btn admin-premium-btn" type="button" id="adminPremiumBtn" onclick="adminTogglePremium()">Aktifkan Premium</button>
+      </div>
     </div>
   </div>
 </div>
@@ -259,6 +285,15 @@ function showMikiDebugBanner(msg){
 <section class="hero page-hero testi-hero-clean">
   <h1 data-page-title>Testi Order</h1>
   <p data-page-desc>Kumpulan bukti order dari customer Miki Universe</p>
+</section>
+
+<section class="rating-section" id="ratingSection">
+  <div class="rating-summary">
+    <div class="rating-summary-score" id="ratingAvgScore">-</div>
+    <div class="rating-summary-stars" id="ratingAvgStars"></div>
+    <div class="rating-summary-count" id="ratingCount">Belum ada rating</div>
+  </div>
+  <div class="rating-list" id="ratingList"></div>
 </section>
 
 <section id="testi-list" class="single-testi-section">
