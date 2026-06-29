@@ -312,19 +312,30 @@ document.addEventListener("DOMContentLoaded", function(){
 
 /* === BEFORE / AFTER SLIDER === */
 document.addEventListener("DOMContentLoaded", function(){
-  const range  = document.getElementById("previewRange");
-  const wrap   = document.getElementById("previewAfterWrap");
-  const handle = document.getElementById("previewHandle");
+  const range   = document.getElementById("previewRange");
+  const wrap    = document.getElementById("previewAfterWrap");
+  const handle  = document.getElementById("previewHandle");
+  const divider = document.getElementById("previewDivider");
   if(!range || !wrap || !handle) return;
 
-  function update(){
+  let pending = false;
+
+  function applyUpdate(){
+    pending = false;
     const v = range.value;
-    wrap.style.width   = v + "%";
-    handle.style.left  = v + "%";
+    wrap.style.clipPath = `inset(0 ${100 - v}% 0 0)`;
+    handle.style.left = v + "%";
+    if(divider) divider.style.left = v + "%";
+  }
+
+  function update(){
+    if(pending) return;
+    pending = true;
+    requestAnimationFrame(applyUpdate);
   }
 
   range.addEventListener("input", update);
-  update();
+  applyUpdate();
 });
 
 
