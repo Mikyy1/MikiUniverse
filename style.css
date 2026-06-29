@@ -195,7 +195,7 @@ body.lang-ms .ms-check { display: inline-block; }
   background: radial-gradient(circle at 12% 20%, rgba(255,255,255,.06), transparent 38%);
   pointer-events: none;
 }
-.status-main { position: relative; display: flex; align-items: center; gap: 14px; }
+.status-main { position: relative; display: flex; align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .status-dot {
   width: 14px; height: 14px; border-radius: 50%;
   background: #22c963;
@@ -959,4 +959,18 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
   /* chat bubble turun ke posisi standar pojok kanan bawah (sebelumnya
      digeser naik buat ngasih jarak ke bottom-nav) */
   .miki-ai-bubble { bottom: 24px; }
+}
+
+/* nav atas dipaksa PRESISI di tengah header pakai grid 3 kolom simetris,
+   nggak ngandelin space-between yang gampang miring kalau logo & tombol
+   kanan beda lebar */
+@media (min-width: 601px) {
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    column-gap: 16px;
+  }
+  header .logo-img { justify-self: start; }
+  header nav { justify-self: center; }
+  header .header-actions { justify-self: end; }
 }
