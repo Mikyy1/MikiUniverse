@@ -945,3 +945,18 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
   .profile-avatar-fallback { font-size: 80px; }
 }
 
+
+/* ============================================================
+   DESKTOP / LAYAR LEBAR — rapihin elemen yang didesain mobile-app-style
+   ============================================================ */
+@media (min-width: 901px) {
+  /* bottom-nav ala app HP nggak natural di desktop, nav atas udah cukup */
+  .bottom-nav { display: none; }
+
+  /* nggak perlu reserve jarak buat bottom-nav lagi */
+  body { padding-bottom: 40px; }
+
+  /* chat bubble turun ke posisi standar pojok kanan bawah (sebelumnya
+     digeser naik buat ngasih jarak ke bottom-nav) */
+  .miki-ai-bubble { bottom: 24px; }
+}
