@@ -956,6 +956,8 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
 /* ============================================================
    DESKTOP / LAYAR LEBAR — rapihin elemen yang didesain mobile-app-style
    ============================================================ */
+.desktop-only-link { display: none; }
+
 @media (min-width: 901px) {
   /* bottom-nav ala app HP nggak natural di desktop, nav atas udah cukup */
   .bottom-nav { display: none; }
@@ -966,6 +968,10 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
   /* chat bubble turun ke posisi standar pojok kanan bawah (sebelumnya
      digeser naik buat ngasih jarak ke bottom-nav) */
   .miki-ai-bubble { bottom: 24px; }
+
+  /* begitu bottom-nav (yang ada tombol "More") disembunyikan, link
+     Testi/Preset/dll dipindah ke nav atas biar tetap bisa diakses */
+  .desktop-only-link { display: inline; }
 }
 
 /* nav atas dipaksa PRESISI di tengah header pakai grid 3 kolom simetris,
