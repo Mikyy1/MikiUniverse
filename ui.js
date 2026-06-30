@@ -97,7 +97,8 @@ const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman
   "loginGoogle", "submitEmailAuth", "loginGuest", "submitAdminLogin",
   "onAvatarFileChange", "saveProfile", "adminSearchUser", "adminSaveTitle",
   "adminToggleRole", "adminTogglePremium", "logoutUser",
-  "onPresetPhotoChange", "submitPresetPost", "deletePresetPost"
+  "onPresetPhotoChange", "submitPresetPost", "deletePresetPost",
+  "togglePresetEdit", "savePresetEdit"
 ].forEach(name => {
   window[name] = function () { alert(MIKI_FIREBASE_NOT_READY); };
 });

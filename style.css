@@ -1063,13 +1063,35 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
 .preset-card-photo img { width: 100%; display: block; }
 .preset-card-photo:last-child { margin-bottom: 0; }
 
-.preset-delete-btn {
-  position: absolute; top: 14px; right: 14px;
+.preset-admin-btns { margin-left: auto; display: flex; gap: 8px; }
+.preset-edit-btn-icon, .preset-delete-btn {
   width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(255,80,80,.10); border: 1px solid rgba(255,80,80,.2);
-  color: #ff8a8a; display: grid; place-items: center; cursor: pointer;
+  display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
 }
-.preset-delete-btn .icon { font-size: 13px; }
+.preset-edit-btn-icon {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #ccc;
+}
+.preset-delete-btn {
+  background: rgba(255,80,80,.10); border: 1px solid rgba(255,80,80,.2); color: #ff8a8a;
+}
+.preset-edit-btn-icon .icon, .preset-delete-btn .icon { font-size: 13px; }
+
+.preset-edit-area { display: none; margin-bottom: 12px; }
+.preset-card.editing .preset-view-area { display: none; }
+.preset-card.editing .preset-edit-area { display: block; }
+
+.preset-edit-input {
+  width: 100%; padding: 12px 14px; border-radius: 14px;
+  background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.12);
+  color: #fff; font-size: 13.5px; outline: none; resize: vertical;
+  font-family: inherit; margin-bottom: 8px;
+}
+.preset-edit-input:focus { border-color: rgba(255,255,255,.3); }
+.preset-edit-actions { display: flex; gap: 10px; }
+.preset-edit-cancel-btn, .preset-edit-save-btn {
+  flex: 1; padding: 11px; font-size: 13.5px;
+}
+.preset-edit-cancel-btn { background: rgba(255,255,255,.04); }
 
 @media (max-width: 480px) {
   .preset-composer { border-radius: 20px; padding: 16px 18px; }

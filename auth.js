@@ -129,12 +129,14 @@ onAuthStateChanged(auth, async (user) => {
         renderHeaderAccount();
         if ($("profileModal")?.classList.contains("active")) renderProfileModal();
         setupPresetComposerVisibility();
+        renderPresetFeedFromCache();
       }
     });
   } else {
     window.__mikiAuthState.currentProfile = null;
     renderHeaderAccount();
     setupPresetComposerVisibility();
+    renderPresetFeedFromCache();
   }
 });
 
@@ -285,6 +287,29 @@ async function deletePresetPost(postId) {
   }
 }
 
+function togglePresetEdit(postId) {
+  const card = document.querySelector(`.preset-card[data-id="${postId}"]`);
+  if (!card) return;
+  card.classList.toggle("editing");
+}
+
+async function savePresetEdit(postId) {
+  const { currentProfile } = window.__mikiAuthState;
+  if (currentProfile?.role !== "admin") return;
+  const card = document.querySelector(`.preset-card[data-id="${postId}"]`);
+  if (!card) return;
+  const textarea = card.querySelector(".preset-edit-input");
+  const newCaption = (textarea?.value || "").trim();
+  const errEl = card.querySelector(".preset-edit-error");
+  if (errEl) errEl.textContent = "";
+  try {
+    await updateDoc(doc(db, "presets", postId), { caption: newCaption });
+    card.classList.remove("editing");
+  } catch (e) {
+    if (errEl) errEl.textContent = "Gagal simpan perubahan.";
+  }
+}
+
 function renderPresetCard(id, data, isAdmin) {
   const avatar = data.authorPhoto
     ? `<img src="${escapeAttr(data.authorPhoto)}" alt="">`
@@ -292,24 +317,61 @@ function renderPresetCard(id, data, isAdmin) {
   const photoBlock = data.photoURL
     ? `<div class="preset-card-photo"><img src="${escapeAttr(data.photoURL)}" alt="Foto preset"></div>`
     : "";
-  const deleteBtn = isAdmin
-    ? `<button class="preset-delete-btn" type="button" onclick="deletePresetPost('${id}')"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>`
+  const adminBtns = isAdmin
+    ? `<div class="preset-admin-btns">
+         <button class="preset-edit-btn-icon" type="button" onclick="togglePresetEdit('${id}')"><svg class="icon" aria-hidden="true"><use href="#icon-pencil"></use></svg></button>
+         <button class="preset-delete-btn" type="button" onclick="deletePresetPost('${id}')"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+       </div>`
+    : "";
+  const editBlock = isAdmin
+    ? `<div class="preset-edit-area">
+         <textarea class="preset-edit-input" rows="4" maxlength="1200">${escapeHtml(data.caption || "")}</textarea>
+         <p class="auth-error preset-edit-error"></p>
+         <div class="preset-edit-actions">
+           <button class="btn preset-edit-cancel-btn" type="button" onclick="togglePresetEdit('${id}')">Batal</button>
+           <button class="btn preset-edit-save-btn" type="button" onclick="savePresetEdit('${id}')">Simpan</button>
+         </div>
+       </div>`
     : "";
 
   return `
-    <article class="preset-card">
+    <article class="preset-card" data-id="${id}">
       <div class="preset-card-head">
         ${avatar}
         <div>
           <div class="preset-author-name">${escapeHtml(data.authorName || "Admin")}</div>
           <div class="preset-card-date">${formatPresetDate(data.createdAt)}</div>
         </div>
-        ${deleteBtn}
+        ${adminBtns}
       </div>
-      ${data.caption ? `<p class="preset-card-caption">${linkifyHtml(data.caption)}</p>` : ""}
+      <div class="preset-view-area">
+        ${data.caption ? `<p class="preset-card-caption">${linkifyHtml(data.caption)}</p>` : ""}
+      </div>
+      ${editBlock}
       ${photoBlock}
     </article>
   `;
+}
+
+let lastPresetDocs = null;
+
+function renderPresetFeedFromCache() {
+  const listEl = $("presetFeedList");
+  if (!listEl || !lastPresetDocs) return;
+  const { currentProfile } = window.__mikiAuthState;
+  const isAdmin = currentProfile?.role === "admin";
+  const emptyEl = $("presetFeedEmpty");
+
+  if (lastPresetDocs.length === 0) {
+    if (emptyEl) emptyEl.style.display = "block";
+    listEl.querySelectorAll(".preset-card").forEach((el) => el.remove());
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = "none";
+
+  let html = "";
+  lastPresetDocs.forEach(({ id, data }) => { html += renderPresetCard(id, data, isAdmin); });
+  listEl.innerHTML = html + (emptyEl ? emptyEl.outerHTML : "");
 }
 
 function subscribePresetFeed() {
@@ -319,20 +381,9 @@ function subscribePresetFeed() {
   if (unsubPresetFeed) unsubPresetFeed();
   const q = query(collection(db, "presets"), orderBy("createdAt", "desc"));
   unsubPresetFeed = onSnapshot(q, (snap) => {
-    const { currentProfile } = window.__mikiAuthState;
-    const isAdmin = currentProfile?.role === "admin";
-    const emptyEl = $("presetFeedEmpty");
-
-    if (snap.empty) {
-      if (emptyEl) emptyEl.style.display = "block";
-      listEl.querySelectorAll(".preset-card").forEach((el) => el.remove());
-      return;
-    }
-    if (emptyEl) emptyEl.style.display = "none";
-
-    let html = "";
-    snap.forEach((d) => { html += renderPresetCard(d.id, d.data(), isAdmin); });
-    listEl.innerHTML = html + (emptyEl ? emptyEl.outerHTML : "");
+    lastPresetDocs = [];
+    snap.forEach((d) => { lastPresetDocs.push({ id: d.id, data: d.data() }); });
+    renderPresetFeedFromCache();
   }, () => {
     if (listEl) listEl.innerHTML = `<p class="preset-feed-empty">Gagal muat konten. Coba refresh halaman.</p>`;
   });
@@ -539,7 +590,8 @@ Object.assign(window, {
   onAvatarFileChange, saveProfile,
   adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
   logoutUser,
-  onPresetPhotoChange, submitPresetPost, deletePresetPost
+  onPresetPhotoChange, submitPresetPost, deletePresetPost,
+  togglePresetEdit, savePresetEdit
 });
 
 console.log("[Miki Auth] Firebase siap & nyambung.");
