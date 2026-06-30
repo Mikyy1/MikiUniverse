@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp,
-  collection, query, where, getDocs, limit
+  collection, query, where, getDocs, limit, addDoc, deleteDoc, orderBy
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { firebaseConfig, BOOTSTRAP_ADMIN_EMAILS } from "./firebase-config.js";
 
@@ -128,11 +128,13 @@ onAuthStateChanged(auth, async (user) => {
         window.__mikiAuthState.currentProfile = snap.data();
         renderHeaderAccount();
         if ($("profileModal")?.classList.contains("active")) renderProfileModal();
+        setupPresetComposerVisibility();
       }
     });
   } else {
     window.__mikiAuthState.currentProfile = null;
     renderHeaderAccount();
+    setupPresetComposerVisibility();
   }
 });
 
@@ -191,6 +193,152 @@ function renderProfileModal() {
   $("profileError").textContent = "";
 }
 window.__mikiRenderProfileModal = renderProfileModal;
+
+/* ---------- Preset Feed (post admin: preset, link CR, konten) ---------- */
+let stagedPresetPhoto = null;
+let unsubPresetFeed = null;
+
+function linkifyHtml(rawText) {
+  const escaped = escapeHtml(rawText);
+  const urlRegex = /((https?:\/\/|www\.)[^\s<]+)/gi;
+  return escaped.replace(urlRegex, (match) => {
+    const href = match.startsWith("http") ? match : "https://" + match;
+    return `<a href="${escapeAttr(href)}" target="_blank" rel="noopener">${match}</a>`;
+  });
+}
+
+function formatPresetDate(timestamp) {
+  if (!timestamp || !timestamp.seconds) return "";
+  const d = new Date(timestamp.seconds * 1000);
+  const bulan = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const jam = String(d.getHours()).padStart(2, "0");
+  const menit = String(d.getMinutes()).padStart(2, "0");
+  return `${d.getDate()} ${bulan[d.getMonth()]} ${d.getFullYear()} · ${jam}:${menit}`;
+}
+
+function setupPresetComposerVisibility() {
+  const composer = $("presetComposer");
+  if (!composer) return;
+  const { currentProfile } = window.__mikiAuthState;
+  composer.style.display = currentProfile?.role === "admin" ? "block" : "none";
+}
+
+async function onPresetPhotoChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const errEl = $("presetError");
+  if (errEl) errEl.textContent = "";
+  try {
+    const dataUrl = await compressImageToDataURL(file, 1080, 0.78);
+    stagedPresetPhoto = dataUrl;
+    $("presetPhotoPreview").src = dataUrl;
+    $("presetPhotoPreview").style.display = "block";
+    $("presetPhotoHint").style.display = "none";
+  } catch (e) {
+    if (errEl) errEl.textContent = "Gagal proses foto. Coba foto lain.";
+  }
+}
+
+async function submitPresetPost() {
+  const { currentUser, currentProfile } = window.__mikiAuthState;
+  const errEl = $("presetError");
+  if (errEl) errEl.textContent = "";
+  if (!currentUser || currentProfile?.role !== "admin") {
+    if (errEl) errEl.textContent = "Cuma admin yang bisa posting.";
+    return;
+  }
+  const caption = ($("presetCaptionInput")?.value || "").trim();
+  if (!caption && !stagedPresetPhoto) {
+    if (errEl) errEl.textContent = "Isi caption atau pilih foto dulu.";
+    return;
+  }
+  const btn = $("presetSubmitBtn");
+  if (btn) btn.disabled = true;
+  try {
+    await addDoc(collection(db, "presets"), {
+      caption,
+      photoURL: stagedPresetPhoto || "",
+      authorName: currentProfile?.displayName || "Admin",
+      authorPhoto: currentProfile?.photoURL || "",
+      createdAt: serverTimestamp()
+    });
+    $("presetCaptionInput").value = "";
+    stagedPresetPhoto = null;
+    $("presetPhotoPreview").style.display = "none";
+    $("presetPhotoPreview").src = "";
+    $("presetPhotoHint").style.display = "flex";
+  } catch (e) {
+    if (errEl) errEl.textContent = "Gagal posting. Coba lagi.";
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function deletePresetPost(postId) {
+  const { currentProfile } = window.__mikiAuthState;
+  if (currentProfile?.role !== "admin") return;
+  if (!confirm("Hapus post ini?")) return;
+  try {
+    await deleteDoc(doc(db, "presets", postId));
+  } catch (e) {
+    alert("Gagal hapus post.");
+  }
+}
+
+function renderPresetCard(id, data, isAdmin) {
+  const avatar = data.authorPhoto
+    ? `<img src="${escapeAttr(data.authorPhoto)}" alt="">`
+    : `<div class="preset-author-fallback"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg></div>`;
+  const photoBlock = data.photoURL
+    ? `<div class="preset-card-photo"><img src="${escapeAttr(data.photoURL)}" alt="Foto preset"></div>`
+    : "";
+  const deleteBtn = isAdmin
+    ? `<button class="preset-delete-btn" type="button" onclick="deletePresetPost('${id}')"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>`
+    : "";
+
+  return `
+    <article class="preset-card">
+      <div class="preset-card-head">
+        ${avatar}
+        <div>
+          <div class="preset-author-name">${escapeHtml(data.authorName || "Admin")}</div>
+          <div class="preset-card-date">${formatPresetDate(data.createdAt)}</div>
+        </div>
+        ${deleteBtn}
+      </div>
+      ${data.caption ? `<p class="preset-card-caption">${linkifyHtml(data.caption)}</p>` : ""}
+      ${photoBlock}
+    </article>
+  `;
+}
+
+function subscribePresetFeed() {
+  const listEl = $("presetFeedList");
+  if (!listEl) return;
+
+  if (unsubPresetFeed) unsubPresetFeed();
+  const q = query(collection(db, "presets"), orderBy("createdAt", "desc"));
+  unsubPresetFeed = onSnapshot(q, (snap) => {
+    const { currentProfile } = window.__mikiAuthState;
+    const isAdmin = currentProfile?.role === "admin";
+    const emptyEl = $("presetFeedEmpty");
+
+    if (snap.empty) {
+      if (emptyEl) emptyEl.style.display = "block";
+      listEl.querySelectorAll(".preset-card").forEach((el) => el.remove());
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = "none";
+
+    let html = "";
+    snap.forEach((d) => { html += renderPresetCard(d.id, d.data(), isAdmin); });
+    listEl.innerHTML = html + (emptyEl ? emptyEl.outerHTML : "");
+  }, () => {
+    if (listEl) listEl.innerHTML = `<p class="preset-feed-empty">Gagal muat konten. Coba refresh halaman.</p>`;
+  });
+}
+
+subscribePresetFeed();
 
 /* ---------- Google ---------- */
 async function loginGoogle() {
@@ -390,7 +538,8 @@ Object.assign(window, {
   loginGoogle, submitEmailAuth, loginGuest, submitAdminLogin,
   onAvatarFileChange, saveProfile,
   adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
-  logoutUser
+  logoutUser,
+  onPresetPhotoChange, submitPresetPost, deletePresetPost
 });
 
 console.log("[Miki Auth] Firebase siap & nyambung.");

@@ -26,11 +26,18 @@ function showMikiDebugBanner(msg){
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Miki Edit - Top Langganan</title>
+<title>Preset & Konten - Miki Universe</title>
 <link rel="icon" href="assets/miki-universe-logo.png">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body
+  data-title-id="Preset & Konten"
+  data-title-en="Presets & Content"
+  data-title-ms="Preset & Kandungan"
+  data-desc-id="Kumpulan preset, link CR, dan konten dari Miki Universe."
+  data-desc-en="A collection of presets, CR links, and content from Miki Universe."
+  data-desc-ms="Kumpulan preset, pautan CR, dan kandungan daripada Miki Universe."
+>
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
 <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="4.2" ry="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/></symbol>
 <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="4 13 9 18 20 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -69,6 +76,7 @@ function showMikiDebugBanner(msg){
 <symbol id="icon-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></symbol>
 </svg>
 
+
 <div class="particle-bg">
   <span></span><span></span><span></span><span></span>
   <span></span><span></span><span></span><span></span>
@@ -79,10 +87,10 @@ function showMikiDebugBanner(msg){
     <img src="assets/miki-universe-logo.png" alt="Miki Universe Logo">
   </a>
   <nav>
-    <a href="#top" data-i18n="headerNavTop">Top</a>
-    <a href="#service" data-i18n="headerNavService">Service</a>
-    <a href="#why-order" data-i18n="headerNavWhy">Why</a>
-    <a href="#contact" data-i18n="headerNavSocial">Social</a>
+    <a href="/#top" data-i18n="headerNavTop">Top</a>
+    <a href="/#service" data-i18n="headerNavService">Service</a>
+    <a href="/#why-order" data-i18n="headerNavWhy">Why</a>
+    <a href="/#contact" data-i18n="headerNavSocial">Social</a>
   </nav>
   <div class="header-actions">
     <button class="lang-btn" type="button" onclick="toggleLangMenu()">
@@ -154,7 +162,7 @@ function showMikiDebugBanner(msg){
     </div>
 
     <div class="auth-panel" data-panel="admin">
-      <p class="auth-hint">Khusus admin Miki.</p>
+      <p class="auth-hint">Khusus admin Miki Universe.</p>
       <div class="auth-field">
         <label>Email Admin</label>
         <input type="email" id="adminEmailInput" placeholder="admin@email.com" autocomplete="username">
@@ -258,220 +266,33 @@ function showMikiDebugBanner(msg){
 </div>
 
 
-<!-- HERO -->
-<section class="hero">
-  <h1 data-i18n-html="heroTitle">Top Langganan<br>Edit Miki</h1>
-  <p data-i18n="heroDesc">Website khusus buat nampilin customer yang paling sering edit. Karena repeat order lebih setia daripada manusia yang bilang "aku ga bakal berubah".</p>
-
-  <div class="buttons">
-    <button id="goTopCustomerBtn" class="btn hero-action-btn" type="button" data-i18n="btnTop">🔥 Lihat Top Langganan</button>
-    <button id="orderWhatsappBtn" class="btn hero-action-btn" type="button" data-i18n="btnWa">💬 Order via WhatsApp</button>
-  </div>
-
-  <div class="status-card" id="statusCard" data-status="available">
-    <div class="status-main">
-      <span class="status-dot"></span>
-      <div>
-        <h3 id="statusTitle" data-i18n="statusTitle">Available Today</h3>
-        <p id="statusDesc" data-i18n="statusDesc">Open order, fast response, dan masih ada slot edit.</p>
-      </div>
-    </div>
-    <div class="status-meta">
-      <span class="status-slot"><svg class="icon" aria-hidden="true"><use href="#icon-fire"></use></svg><b>3 Slots Left</b></span>
-      <span class="status-hours"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><b>13:00 – 23:00</b></span>
-    </div>
-  </div>
+<section class="hero page-hero testi-hero-clean">
+  <h1 data-page-title>Preset & Konten</h1>
+  <p data-page-desc>Kumpulan preset, link CR, dan konten yang pernah Miki bikin/kontenin.</p>
 </section>
 
-<!-- CUSTOMER ROYAL BANNER -->
-<div class="banner">
-  <h2 data-i18n="royalTitle">🔥 Customer Royal</h2>
-  <p data-i18n="royalDesc">Yang masuk sini berarti udah sering order. Mental kuat. Dompet sehat.</p>
+<div class="preset-composer" id="presetComposer" style="display:none">
+  <h3><svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg> Post Baru</h3>
+  <textarea class="preset-caption-input" id="presetCaptionInput" placeholder="Tulis caption... (link otomatis bisa diklik)" rows="4" maxlength="1200"></textarea>
+
+  <div class="preset-photo-area" id="presetPhotoArea" onclick="document.getElementById('presetPhotoInput').click()">
+    <img id="presetPhotoPreview" style="display:none" alt="">
+    <div id="presetPhotoHint">
+      <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
+      <span>Foto (opsional) — ketuk buat pilih</span>
+    </div>
+  </div>
+  <input type="file" id="presetPhotoInput" accept="image/*" style="display:none" onchange="onPresetPhotoChange(event)">
+
+  <p class="auth-error" id="presetError"></p>
+  <button class="btn preset-submit-btn" type="button" id="presetSubmitBtn" onclick="submitPresetPost()">
+    <svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg> Posting
+  </button>
 </div>
 
-<!-- TOP LANGGANAN -->
-<section id="top">
-  <h2 class="section-title" data-i18n="topTitle">Top Langganan</h2>
-  <div id="top-list" class="cards">
-    <div class="card">
-      <div class="rank">#1</div>
-      <div class="name">Veldora</div>
-      <div class="total"><span data-i18n="totalEdit">Total Edit</span>: 48x</div>
-      <span class="tag"><span data-i18n="tagRoyal">Paling Royal</span></span>
-    </div>
-    <div class="card">
-      <div class="rank">#2</div>
-      <div class="name">JeRifqi</div>
-      <div class="total"><span data-i18n="totalEdit">Total Edit</span>: 34x</div>
-      <span class="tag"><span data-i18n="tagRegular">Langganan Tetap</span></span>
-    </div>
-    <div class="card">
-      <div class="rank">#3</div>
-      <div class="name">Rendy</div>
-      <div class="total"><span data-i18n="totalEdit">Total Edit</span>: 4x</div>
-      <span class="tag"><span data-i18n="tagNoDrama">No Drama</span></span>
-    </div>
-  </div>
-</section>
-
-<!-- SERVICE -->
-<section id="service">
-  <h2 class="section-title" data-i18n="serviceTitle">Service Edit</h2>
-  <div class="services">
-    <div class="service">
-      <h3 data-i18n="svcCcTitle">CC Gameplay</h3>
-      <p data-i18n="svcCcDesc">Color correction gameplay biar gameplay lu makin HD.</p>
-    </div>
-    <div class="service">
-      <h3 data-i18n="svcEditTitle">Paid Edit</h3>
-      <p data-i18n="svcEditDesc">Edit MLBB, Game lainnya. Konsep bebas yang penting masuk akal</p>
-    </div>
-    <div class="service">
-      <h3 data-i18n="svcAmTitle">Alight Motion</h3>
-      <p data-i18n="svcAmDesc">Order Account Premium Alight Motion 1 Years.</p>
-    </div>
-  </div>
-</section>
-
-<!-- PREVIEW CC SLIDER -->
-<section class="preview-section" id="preview">
-  <h2 class="section-title">Preview CC</h2>
-  <p class="section-subtitle">Geser buat lihat perbedaan before dan after hasil CC.</p>
-
-  <div class="preview-cc-card">
-    <div class="preview-cc-slider">
-      <img src="assets/before.jpg" class="preview-img preview-before" alt="Before">
-      <div class="preview-after-wrap" id="previewAfterWrap">
-        <img src="assets/after.jpg" class="preview-img preview-after" alt="After">
-      </div>
-      <div class="preview-divider" id="previewDivider"></div>
-      <div class="preview-label preview-label-left">BEFORE</div>
-      <div class="preview-label preview-label-right">AFTER</div>
-      <div class="preview-handle" id="previewHandle">
-        <svg class="icon" aria-hidden="true"><use href="#icon-left-right"></use></svg>
-      </div>
-      <input type="range" min="0" max="100" value="50" class="preview-range" id="previewRange">
-    </div>
-  </div>
-</section>
-
-<!-- WHY ORDER -->
-<section id="why-order">
-  <h2 class="section-title" data-i18n="whyTitle">Kenapa Harus Order Disini?</h2>
-  <div class="trust-grid">
-    <div class="trust-card">
-      <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg></span>
-      <h3 data-i18n="whyFastTitle">Fast Response</h3>
-      <p data-i18n="whyFastDesc">Chat dibales cepat, order diproses tanpa drama panjang.</p>
-    </div>
-    <div class="trust-card">
-      <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
-      <h3 data-i18n="whyQualityTitle">Hasil Niat</h3>
-      <p data-i18n="whyQualityDesc">Edit dibuat rapi, bukan asal tempel effect</p>
-    </div>
-    <div class="trust-card">
-      <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-shield-heart"></use></svg></span>
-      <h3 data-i18n="whyTrustedTitle">Trusted Customer</h3>
-      <p data-i18n="whyTrustedDesc">Banyak repeat order dan bukti testi yang bisa dicek.</p>
-    </div>
-    <div class="trust-card">
-      <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-rotate"></use></svg></span>
-      <h3 data-i18n="whyRevisionTitle">Revisi Aman</h3>
-      <p data-i18n="whyRevisionDesc">Masih bisa revisi sesuai request selama masuk akal.</p>
-    </div>
-  </div>
-</section>
-
-<!-- RECENT TIKTOK -->
-<section id="recent-tiktok">
-  <h2 class="section-title" data-i18n="recentTitle">Recently Uploaded</h2>
-  <p class="section-subtitle" data-i18n="recentDesc">Video terbaru dari TikTok admin.</p>
-
-  <div class="recent-mini-card">
-    <a class="recent-thumb" id="tiktokLinkThumb" href="https://vt.tiktok.com/ZSx4gRaor/" target="_blank">
-      <img id="tiktokThumb" src="assets/tiktok-thumb.jpg" alt="TikTok Thumbnail">
-      <span class="play-badge"><svg class="icon" aria-hidden="true"><use href="#icon-tiktok"></use></svg></span>
-    </a>
-    <div class="recent-content">
-      <span class="recent-pill" id="tiktokUploaded">Recently uploaded</span>
-      <h3 data-i18n="recentInfoTitle">Latest TikTok Video</h3>
-      <p id="tiktokCaption">Recent upload</p>
-      <div class="recent-stats">
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-eye"></use></svg><b id="tiktokViews">12.4K</b></span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-comment"></use></svg><b id="tiktokComments">328</b></span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-share"></use></svg><b id="tiktokShares">97</b></span>
-      </div>
-      <a class="recent-watch" id="tiktokLink" href="https://vt.tiktok.com/ZSx4gRaor/" target="_blank">
-        <svg class="icon" aria-hidden="true"><use href="#icon-tiktok"></use></svg>
-        <span data-i18n="watchTikTok">Watch on TikTok</span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- SOCIAL MEDIA -->
-<section id="contact" class="nevency-social">
-  <div class="nevency-social-head">
-    <span class="section-badge">SOCIAL HUB</span>
-    <h2 class="section-title" data-i18n="socialTitle">Social Media</h2>
-    <p class="section-subtitle">Semua Social Admin Miki Universe</p>
-  </div>
-
-  <div class="linkhub-grid">
-    <div class="linkhub-card featured-link">
-      <div class="linkhub-icon"><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg></div>
-      <div class="linkhub-content">
-        <span>FEATURED</span>
-        <h3>Order via WhatsApp</h3>
-        <p>Chat admin langsung buat order edit, CC Gameplay, atau HD-in video.</p>
-        <div class="linkhub-buttons">
-          <a href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank" rel="noopener">
-            Open WhatsApp <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="linkhub-card">
-      <div class="linkhub-icon"><svg class="icon" aria-hidden="true"><use href="#icon-tiktok"></use></svg></div>
-      <div class="linkhub-content">
-        <span>TIKTOK</span>
-        <h3>TikTok</h3>
-        <p>Konten edit, preview gameplay, dan update dari Miki Universe.</p>
-        <div class="linkhub-buttons">
-          <a href="https://tiktok.com/@mikyzell" target="_blank" rel="noopener">TikTok <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg></a>
-          <a href="https://vt.tiktok.com/ZSx4gRaor/" target="_blank" rel="noopener">Recent <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg></a>
-        </div>
-      </div>
-    </div>
-
-    <div class="linkhub-card">
-      <div class="linkhub-icon"><svg class="icon" aria-hidden="true"><use href="#icon-instagram"></use></svg></div>
-      <div class="linkhub-content">
-        <span>INSTAGRAM</span>
-        <h3>Instagram</h3>
-        <p>Follow buat lihat Keseharian Mimin</p>
-        <div class="linkhub-buttons">
-          <a href="https://instagram.com/mikyzell" target="_blank" rel="noopener">
-            @mikyzell <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="linkhub-card">
-      <div class="linkhub-icon"><svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg></div>
-      <div class="linkhub-content">
-        <span>COMMUNITY</span>
-        <h3>Saluran WhatsApp</h3>
-        <p>Join channel buat update info, Preset, dan Order edit</p>
-        <div class="linkhub-buttons">
-          <a href="https://whatsapp.com/channel/0029Vb5e424KbYMQtNiHoz0b" target="_blank" rel="noopener">
-            Join Channel <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg>
-          </a>
-        </div>
-      </div>
-    </div>
+<section id="preset-feed" class="preset-feed-section">
+  <div class="preset-feed-list" id="presetFeedList">
+    <p class="preset-feed-empty" id="presetFeedEmpty" style="display:none">Belum ada post. Cek lagi nanti ya!</p>
   </div>
 </section>
 
@@ -479,48 +300,14 @@ function showMikiDebugBanner(msg){
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <a href="#top" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
-  <a href="#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
+  <a href="/#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
+  <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
   <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
-  <a href="#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
-  <button class="nav-item nav-button" type="button" onclick="openMorePopup()">
-    <svg class="icon" aria-hidden="true"><use href="#icon-ellipsis"></use></svg><span data-i18n="navMore">More</span>
-  </button>
+  <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
+  <a href="/preset" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg><span data-i18n="navPreset">Preset</span></a>
 </div>
 
-<!-- MORE POPUP -->
-<div class="popup-overlay" id="morePopup">
-  <div class="popup-box">
-    <button class="popup-close" onclick="closeMorePopup()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
-    <h2><span data-i18n="moreTitle">More Menu</span></h2>
-    <p><span data-i18n="moreDesc">Pilih jenis testi.</span></p>
-    <div class="clean-more-list">
-      <a class="clean-more-card" href="/testi">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
-        <div>
-          <h3>Testi Order</h3>
-          <span>Lihat semua bukti order.</span>
-        </div>
-      </a>
-      <a class="clean-more-card" href="/preset">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
-        <div>
-          <h3>Preset & Konten</h3>
-          <span>Preset, link CR, dan konten dari Miki.</span>
-        </div>
-      </a>
-      <a class="clean-more-card" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg></span>
-        <div>
-          <h3>Order Cepat</h3>
-          <span>Langsung chat admin via WhatsApp.</span>
-        </div>
-      </a>
-    </div>
-  </div>
-</div>
-
-<!-- MIKI AI CHAT -->
+<!-- MIKI AI CHAT — harus di dalam body, bukan head -->
 <button class="miki-ai-bubble" id="mikiAiBubble" type="button" onclick="openMikiAi()">
   <svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>
   <span>Chat</span>

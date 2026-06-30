@@ -981,3 +981,96 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
   header nav { justify-self: center; }
   header .header-actions { justify-self: end; }
 }
+
+/* ============================================================
+   PRESET & KONTEN — composer admin + feed publik
+   ============================================================ */
+.preset-composer {
+  width: 100%; max-width: 640px; margin: 0 auto 18px; padding: 20px 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(22,22,22,.96), rgba(7,7,7,.98));
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 12px 35px rgba(0,0,0,.42);
+}
+.preset-composer h3 {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; margin-bottom: 14px; color: #fff;
+}
+.preset-composer h3 .icon { font-size: 16px; color: #f6b93b; }
+
+.preset-caption-input {
+  width: 100%; padding: 13px 14px; border-radius: 15px;
+  background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10);
+  color: #fff; font-size: 14px; outline: none; resize: vertical;
+  font-family: inherit; margin-bottom: 12px;
+}
+.preset-caption-input:focus { border-color: rgba(255,255,255,.3); }
+.preset-caption-input::placeholder { color: #6f6f78; }
+
+.preset-photo-area {
+  width: 100%; min-height: 110px; border-radius: 16px;
+  border: 1.5px dashed rgba(255,255,255,.16);
+  background: rgba(255,255,255,.025);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; overflow: hidden; margin-bottom: 12px;
+}
+.preset-photo-area img { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+#presetPhotoHint {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: #8a8a94; font-size: 12.5px; padding: 18px;
+}
+#presetPhotoHint .icon { font-size: 24px; color: #6f6f78; }
+
+.preset-submit-btn { width: 100%; padding: 13px; font-size: 14.5px; }
+
+/* --- feed publik --- */
+.preset-feed-section {
+  width: 100%; max-width: 640px; margin: 0 auto 120px; padding: 0 22px;
+}
+.preset-feed-list { display: flex; flex-direction: column; gap: 14px; }
+.preset-feed-empty {
+  text-align: center; color: #8a8a94; font-size: 13.5px; padding: 40px 0;
+}
+
+.preset-card {
+  padding: 18px 20px; border-radius: 22px;
+  background: linear-gradient(180deg, rgba(18,18,18,.96), rgba(5,5,5,.99));
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,.38);
+  position: relative;
+}
+.preset-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.preset-card-head img, .preset-author-fallback {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  flex-shrink: 0;
+}
+.preset-author-fallback { display: grid; place-items: center; color: #777; }
+.preset-author-fallback .icon { font-size: 20px; }
+.preset-author-name { font-weight: 700; font-size: 14px; color: #fff; }
+.preset-card-date { font-size: 11.5px; color: #8a8a94; margin-top: 1px; }
+
+.preset-card-caption {
+  font-size: 14px; line-height: 1.6; color: #d4d4dc;
+  white-space: pre-wrap; word-break: break-word; margin: 0 0 12px;
+}
+.preset-card-caption a { color: #7fb8ff; text-decoration: underline; }
+.preset-card-caption:last-child { margin-bottom: 0; }
+
+.preset-card-photo {
+  border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.07);
+}
+.preset-card-photo img { width: 100%; display: block; }
+.preset-card-photo:last-child { margin-bottom: 0; }
+
+.preset-delete-btn {
+  position: absolute; top: 14px; right: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,80,80,.10); border: 1px solid rgba(255,80,80,.2);
+  color: #ff8a8a; display: grid; place-items: center; cursor: pointer;
+}
+.preset-delete-btn .icon { font-size: 13px; }
+
+@media (max-width: 480px) {
+  .preset-composer { border-radius: 20px; padding: 16px 18px; }
+}
