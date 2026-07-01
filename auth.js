@@ -130,6 +130,7 @@ onAuthStateChanged(auth, async (user) => {
         if ($("profileModal")?.classList.contains("active")) renderProfileModal();
         setupPresetComposerVisibility();
         renderPresetFeedFromCache();
+        window.__mikiOnAuthChange?.();
       }
     });
   } else {
@@ -137,6 +138,7 @@ onAuthStateChanged(auth, async (user) => {
     renderHeaderAccount();
     setupPresetComposerVisibility();
     renderPresetFeedFromCache();
+    window.__mikiOnAuthChange?.();
   }
 });
 

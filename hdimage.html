@@ -26,17 +26,17 @@ function showMikiDebugBanner(msg){
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Preset & Konten - Miki Universe</title>
+<title>HD Image - Miki Universe</title>
 <link rel="icon" href="assets/miki-universe-logo.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body
-  data-title-id="Preset & Konten"
-  data-title-en="Presets & Content"
-  data-title-ms="Preset & Kandungan"
-  data-desc-id="Kumpulan preset, link CR, dan konten dari Miki Universe."
-  data-desc-en="A collection of presets, CR links, and content from Miki Universe."
-  data-desc-ms="Kumpulan preset, pautan CR, dan kandungan daripada Miki Universe."
+  data-title-id="HD Image"
+  data-title-en="HD Image"
+  data-title-ms="HD Image"
+  data-desc-id="Perjelas dan perbesar foto pakai AI, gratis."
+  data-desc-en="Enhance and upscale your photos with AI, for free."
+  data-desc-ms="Tingkatkan dan besarkan foto anda dengan AI, percuma."
 >
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
 <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="4.2" ry="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/></symbol>
@@ -91,7 +91,7 @@ function showMikiDebugBanner(msg){
     <a href="/#service" data-i18n="headerNavService">Service</a>
     <a href="/#why-order" data-i18n="headerNavWhy">Why</a>
     <a href="/#contact" data-i18n="headerNavSocial">Social</a>
-    <a href="/testi" class="desktop-only-link" data-i18n="navTesti">Testi</a>
+    <a href="/preset" class="desktop-only-link" data-i18n="navPreset">Preset</a>
     <a href="/hdimage" class="desktop-only-link">HD Image</a>
   </nav>
   <div class="header-actions">
@@ -269,32 +269,60 @@ function showMikiDebugBanner(msg){
 
 
 <section class="hero page-hero testi-hero-clean">
-  <h1 data-page-title>Preset & Konten</h1>
-  <p data-page-desc>Kumpulan preset, link CR, dan konten yang pernah Miki bikin/kontenin.</p>
+  <h1 data-page-title>HD Image</h1>
+  <p data-page-desc>Perjelas dan perbesar foto pakai AI, gratis.</p>
 </section>
 
-<div class="preset-composer" id="presetComposer" style="display:none">
-  <h3><svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg> Post Baru</h3>
-  <textarea class="preset-caption-input" id="presetCaptionInput" placeholder="Tulis caption... (link otomatis bisa diklik)" rows="4" maxlength="1200"></textarea>
-
-  <div class="preset-photo-area" id="presetPhotoArea" onclick="document.getElementById('presetPhotoInput').click()">
-    <img id="presetPhotoPreview" style="display:none" alt="">
-    <div id="presetPhotoHint">
-      <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
-      <span>Foto (opsional) — ketuk buat pilih</span>
-    </div>
+<section class="hdpage-section">
+  <!-- LOGIN GATE -->
+  <div id="hdLoginGate" class="hdpage-gate" style="display:none">
+    <svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg>
+    <h3>Login Dulu</h3>
+    <p>Fitur ini gratis, tapi butuh login dulu biar Miki tau siapa yang pakai.</p>
+    <button class="btn hdpage-login-btn" type="button" onclick="openAuthModal()">Login Sekarang</button>
   </div>
-  <input type="file" id="presetPhotoInput" accept="image/*" style="display:none" onchange="onPresetPhotoChange(event)">
 
-  <p class="auth-error" id="presetError"></p>
-  <button class="btn preset-submit-btn" type="button" id="presetSubmitBtn" onclick="submitPresetPost()">
-    <svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg> Posting
-  </button>
-</div>
+  <!-- MAIN TOOL -->
+  <div id="hdMain" style="display:none">
+    <div class="hdpage-upload-area" id="hdUploadArea" onclick="document.getElementById('hdFileInput').click()">
+      <img id="hdPreviewImg" style="display:none" alt="">
+      <div id="hdUploadHint">
+        <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
+        <span>Ketuk buat pilih foto</span>
+      </div>
+    </div>
+    <input type="file" id="hdFileInput" accept="image/*" style="display:none">
 
-<section id="preset-feed" class="preset-feed-section">
-  <div class="preset-feed-list" id="presetFeedList">
-    <p class="preset-feed-empty" id="presetFeedEmpty" style="display:none">Belum ada post. Cek lagi nanti ya!</p>
+    <div class="hdpage-servers" id="hdServers" style="display:none">
+      <p class="hdpage-server-label">Pilih server upscale:</p>
+      <div class="hdpage-server-btns">
+        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(1)">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 1
+        </button>
+        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(2)">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 2
+        </button>
+        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(3)">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 3
+        </button>
+      </div>
+    </div>
+
+    <div class="hdpage-status" id="hdStatus" style="display:none">
+      <div class="hdpage-spinner"></div>
+      <span id="hdStatusText">Mengupload foto...</span>
+    </div>
+
+    <p class="auth-error" id="hdError"></p>
+
+    <div class="hdpage-result" id="hdResult" style="display:none">
+      <p class="hdpage-result-label">Hasil HD:</p>
+      <img id="hdResultImg" alt="Hasil HD">
+      <a class="btn hdpage-download-btn" id="hdDownloadBtn" target="_blank" download>
+        <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg> Download Hasil
+      </a>
+      <button class="btn hdpage-retry-btn" type="button" onclick="hdReset()">Upscale Foto Lain</button>
+    </div>
   </div>
 </section>
 
@@ -306,7 +334,7 @@ function showMikiDebugBanner(msg){
   <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
   <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
   <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
-  <a href="/preset" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg><span data-i18n="navPreset">Preset</span></a>
+  <a href="/hdimage" class="nav-item active"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg><span>HD Image</span></a>
 </div>
 
 <!-- MIKI AI CHAT — harus di dalam body, bukan head -->
@@ -341,6 +369,7 @@ function showMikiDebugBanner(msg){
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="hdimage.js"></script>
 <script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
 </body>
 </html>

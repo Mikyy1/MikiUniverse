@@ -1104,45 +1104,76 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
 }
 
 /* ============================================================
-   HD IMAGE — AI upscale client-side (UpscalerJS), gratis & unlimited
+   HD IMAGE PAGE — /hdimage
    ============================================================ */
-.hdimage-box h2 {
-  display: flex; align-items: center; gap: 8px;
+.hdpage-section {
+  width: 100%; max-width: 560px; margin: 0 auto 120px; padding: 0 22px;
 }
-.hdimage-box h2 .icon { font-size: 22px; color: #a78bfa; }
-.hdimage-icon-box { background: linear-gradient(135deg, rgba(168,85,247,.18), rgba(99,102,241,.12)); }
 
-.hdimage-locked-box {
-  text-align: center; padding: 28px 10px 8px;
+/* --- login gate --- */
+.hdpage-gate {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 36px 16px 8px; gap: 8px;
 }
-.hdimage-locked-box .icon {
-  font-size: 38px; color: #6f6f78; margin-bottom: 10px;
-}
-.hdimage-locked-box h3 { font-size: 18px; margin-bottom: 6px; }
-.hdimage-locked-box p { font-size: 13.5px; color: #a7a7b4; margin-bottom: 18px; }
-.hdimage-login-btn { width: 100%; padding: 13px; font-size: 14.5px; }
+.hdpage-gate .icon { font-size: 42px; color: #6f6f78; }
+.hdpage-gate h3 { font-size: 19px; color: #fff; margin: 0; }
+.hdpage-gate p { font-size: 13.5px; color: #a7a7b4; margin: 0 0 10px; line-height: 1.5; }
+.hdpage-login-btn { width: 100%; padding: 13px; font-size: 14.5px; }
 
-.hdimage-upload-area {
-  width: 100%; min-height: 140px; border-radius: 18px;
+/* --- upload area --- */
+.hdpage-upload-area {
+  width: 100%; min-height: 200px; border-radius: 22px;
   border: 1.5px dashed rgba(255,255,255,.16);
   background: rgba(255,255,255,.025);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; overflow: hidden; margin: 16px 0 12px;
+  cursor: pointer; overflow: hidden; margin-bottom: 16px;
 }
-.hdimage-upload-area img { width: 100%; max-height: 360px; object-fit: contain; display: block; }
-#hdImageUploadHint {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  color: #8a8a94; font-size: 12.5px; padding: 26px;
+.hdpage-upload-area img { width: 100%; display: block; }
+#hdUploadHint {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: #8a8a94; font-size: 13px; padding: 30px;
 }
-#hdImageUploadHint .icon { font-size: 26px; color: #6f6f78; }
+#hdUploadHint .icon { font-size: 32px; color: #6f6f78; }
 
-.hdimage-generate-btn { width: 100%; padding: 14px; font-size: 15px; margin-bottom: 10px; }
-.hdimage-generate-btn:disabled { opacity: .55; cursor: not-allowed; }
-.hdimage-note { font-size: 11.5px; color: #6f6f78; line-height: 1.5; text-align: center; margin: 0; }
-
-.hdimage-result { margin-top: 18px; }
-.hdimage-result img {
-  width: 100%; border-radius: 16px; border: 1px solid rgba(255,255,255,.08);
-  margin-bottom: 12px; display: block;
+/* --- server picker --- */
+.hdpage-server-label { font-size: 12.5px; color: #a7a7b4; margin-bottom: 10px; }
+.hdpage-server-btns { display: flex; gap: 10px; margin-bottom: 14px; }
+.hdpage-server-btn {
+  flex: 1; padding: 12px 8px; font-size: 13.5px; width: auto;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
-.hdimage-download-btn { width: 100%; padding: 13px; font-size: 14px; }
+.hdpage-server-btn .icon { font-size: 13px; color: #f6b93b; }
+.hdpage-server-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* --- status (loading) --- */
+.hdpage-status {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 14px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 12px; font-size: 13.5px; color: #d4d4dc;
+}
+.hdpage-spinner {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  border: 2.5px solid rgba(255,255,255,.15);
+  border-top-color: #fff;
+  animation: hdSpin .7s linear infinite;
+}
+@keyframes hdSpin { to { transform: rotate(360deg); } }
+
+/* --- result --- */
+.hdpage-result {
+  display: flex; flex-direction: column; gap: 12px; margin-top: 14px;
+}
+.hdpage-result-label { font-size: 12.5px; color: #a7a7b4; margin: 0; }
+.hdpage-result img {
+  width: 100%; border-radius: 18px; border: 1px solid rgba(255,255,255,.08);
+  display: block;
+}
+.hdpage-download-btn, .hdpage-retry-btn { width: 100%; padding: 13px; font-size: 14.5px; }
+.hdpage-retry-btn {
+  background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.10);
+}
+
+@media (max-width: 480px) {
+  .hdpage-server-btns { flex-direction: column; }
+}

@@ -2,11 +2,13 @@
   "redirects": [
     { "source": "/index.html", "destination": "/home", "permanent": true },
     { "source": "/testi.html", "destination": "/testi", "permanent": true },
-    { "source": "/preset.html", "destination": "/preset", "permanent": true }
+    { "source": "/preset.html", "destination": "/preset", "permanent": true },
+    { "source": "/hdimage.html", "destination": "/hdimage", "permanent": true }
   ],
   "rewrites": [
     { "source": "/home", "destination": "/index.html" },
     { "source": "/testi", "destination": "/testi.html" },
-    { "source": "/preset", "destination": "/preset.html" }
+    { "source": "/preset", "destination": "/preset.html" },
+    { "source": "/hdimage", "destination": "/hdimage.html" }
   ]
 }

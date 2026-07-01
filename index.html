@@ -85,6 +85,7 @@ function showMikiDebugBanner(msg){
     <a href="#contact" data-i18n="headerNavSocial">Social</a>
     <a href="/testi" class="desktop-only-link" data-i18n="navTesti">Testi</a>
     <a href="/preset" class="desktop-only-link" data-i18n="navPreset">Preset</a>
+    <a href="/hdimage" class="desktop-only-link">HD Image</a>
   </nav>
   <div class="header-actions">
     <button class="lang-btn" type="button" onclick="toggleLangMenu()">
@@ -518,60 +519,17 @@ function showMikiDebugBanner(msg){
           <span>Langsung chat admin via WhatsApp.</span>
         </div>
       </a>
-      <button class="clean-more-card" type="button" onclick="closeMorePopup(); openHdImageModal();">
-        <span class="icon-box hdimage-icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
+      <a class="clean-more-card" href="/hdimage">
+        <span class="icon-box" style="background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(99,102,241,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
         <div>
           <h3>HD Image</h3>
-          <span>Perjelas foto pakai AI, langsung di HP lu.</span>
+          <span>Perjelas foto pakai AI — gratis, 3 server.</span>
         </div>
-      </button>
+      </a>
     </div>
   </div>
 </div>
 
-<!-- HD IMAGE MODAL -->
-<div class="popup-overlay" id="hdImageModal">
-  <div class="popup-box hdimage-box">
-    <button class="popup-close" onclick="closeHdImageModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
-    <h2><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg> HD Image</h2>
-    <p>Perjelas & perbesar foto pakai AI — diproses langsung di HP lu, gratis & unlimited.</p>
-
-    <div id="hdImageLoginGate">
-      <div class="hdimage-locked-box">
-        <svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg>
-        <h3>Login Dulu</h3>
-        <p>Fitur ini butuh login (gratis) biar Miki tau siapa aja yang pakai.</p>
-        <button class="btn hdimage-login-btn" type="button" onclick="closeHdImageModal(); openAuthModal();">Login Sekarang</button>
-      </div>
-    </div>
-
-    <div id="hdImageMain" style="display:none">
-      <div class="hdimage-upload-area" id="hdImageUploadArea" onclick="document.getElementById('hdImageFileInput').click()">
-        <img id="hdImagePreview" style="display:none" alt="">
-        <div id="hdImageUploadHint">
-          <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
-          <span>Ketuk buat pilih foto</span>
-        </div>
-      </div>
-      <input type="file" id="hdImageFileInput" accept="image/*" style="display:none">
-
-      <p class="auth-error" id="hdImageError"></p>
-
-      <button class="btn hdimage-generate-btn" type="button" id="hdImageGenerateBtn" disabled>
-        <svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg>
-        <span id="hdImageGenerateLabel">Pilih foto dulu</span>
-      </button>
-      <p class="hdimage-note">Pertama kali pakai, model AI-nya didownload dulu ke HP lu (~beberapa MB), abis itu lebih cepat.</p>
-
-      <div class="hdimage-result" id="hdImageResultBox" style="display:none">
-        <img id="hdImageResultImg" alt="Hasil HD">
-        <a class="btn hdimage-download-btn" id="hdImageDownloadBtn" download="hd-image-miki.jpg">
-          <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg> Download Hasil
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- MIKI AI CHAT -->
 <button class="miki-ai-bubble" id="mikiAiBubble" type="button" onclick="openMikiAi()">
@@ -605,10 +563,7 @@ function showMikiDebugBanner(msg){
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@latest/dist/umd/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
-<script src="hdimage.js" onerror="showMikiDebugBanner(&quot;hdimage.js GAGAL DIMUAT (404?)&quot;)"></script>
+
 <script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
 </body>
 </html>

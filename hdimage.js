@@ -1,170 +1,196 @@
 /* =========================================
-   MIKI UNIVERSE — HD Image (client-side AI upscale)
-   Pakai UpscalerJS + TensorFlow.js, semua proses jalan di HP
-   user sendiri (browser), jadi 100% gratis & unlimited, nggak
-   ada server/API yang dipanggil sama sekali buat fitur ini.
+   MIKI UNIVERSE — HD Image Page
+   Upload foto → catbox.moe (dapet link publik) →
+   kirim ke salah satu dari 3 server upscale gratis
    ========================================= */
 
 (function () {
-  let upscalerInstance = null;
-  let selectedImageEl = null;
+  let selectedFile = null;
   let isProcessing = false;
 
   function $(id) { return document.getElementById(id); }
 
-  function getUpscaler() {
-    if (upscalerInstance) return upscalerInstance;
-    if (typeof Upscaler === "undefined" || typeof DefaultUpscalerJSModel === "undefined") {
-      return null;
+  /* --- gate: cek login & tampilkan UI yang sesuai --- */
+  function refreshGate() {
+    const user = window.__mikiAuthState?.currentUser;
+    const gate = $("hdLoginGate");
+    const main = $("hdMain");
+    if (!gate || !main) return;
+    if (user) {
+      gate.style.display = "none";
+      main.style.display = "block";
+    } else {
+      gate.style.display = "flex";
+      main.style.display = "none";
     }
-    upscalerInstance = new Upscaler({ model: DefaultUpscalerJSModel });
-    return upscalerInstance;
   }
 
-  /* resize gambar input dulu (canvas) biar inference-nya nggak berat,
-     terutama buat foto kamera HP yang bisa 3000-4000px */
-  function loadAndResizeImage(file, maxDim) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          let { width, height } = img;
-          if (width > height) {
-            if (width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
-          } else {
-            if (height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width; canvas.height = height;
-          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          const resizedImg = new Image();
-          resizedImg.onload = () => resolve(resizedImg);
-          resizedImg.onerror = reject;
-          resizedImg.src = canvas.toDataURL("image/jpeg", 0.92);
-        };
-        img.onerror = reject;
-        img.src = reader.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function resetResultArea() {
-    const resultBox = $("hdImageResultBox");
-    if (resultBox) resultBox.style.display = "none";
-  }
-
-  function setGenerateState(label, enabled) {
-    const btn = $("hdImageGenerateBtn");
-    const labelEl = $("hdImageGenerateLabel");
-    if (labelEl) labelEl.textContent = label;
-    if (btn) btn.disabled = !enabled;
-  }
-
-  function onFileSelected(event) {
-    const file = event.target.files?.[0];
+  /* --- file pilih --- */
+  function onFileSelected(e) {
+    const file = e.target.files?.[0];
     if (!file) return;
-    const errEl = $("hdImageError");
-    if (errEl) errEl.textContent = "";
-    resetResultArea();
-    setGenerateState("Memuat foto...", false);
+    selectedFile = file;
 
-    loadAndResizeImage(file, 900)
-      .then((img) => {
-        selectedImageEl = img;
-        const previewEl = $("hdImagePreview");
-        const hintEl = $("hdImageUploadHint");
-        if (previewEl) { previewEl.src = img.src; previewEl.style.display = "block"; }
-        if (hintEl) hintEl.style.display = "none";
-        setGenerateState("Generate HD", true);
-      })
-      .catch(() => {
-        if (errEl) errEl.textContent = "Gagal proses foto. Coba foto lain.";
-        setGenerateState("Pilih foto dulu", false);
-      });
+    const preview = $("hdPreviewImg");
+    const hint = $("hdUploadHint");
+    const servers = $("hdServers");
+    const errEl = $("hdError");
+    const resultEl = $("hdResult");
+
+    if (errEl) errEl.textContent = "";
+    if (resultEl) resultEl.style.display = "none";
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (preview) { preview.src = reader.result; preview.style.display = "block"; }
+      if (hint) hint.style.display = "none";
+      if (servers) servers.style.display = "block";
+    };
+    reader.readAsDataURL(file);
   }
 
-  async function generateHdImage() {
+  /* --- upload ke catbox.moe (dapet public URL) --- */
+  async function uploadToCatbox(file) {
+    const form = new FormData();
+    form.append("reqtype", "fileupload");
+    form.append("fileToUpload", file);
+    const res = await fetch("https://catbox.moe/user/api.php", {
+      method: "POST",
+      body: form
+    });
+    const text = await res.text();
+    if (!text.startsWith("https://")) throw new Error("Upload gagal: " + text.slice(0, 80));
+    return text.trim();
+  }
+
+  /* --- set status UI --- */
+  function setStatus(msg) {
+    const el = $("hdStatus");
+    const txt = $("hdStatusText");
+    if (!el) return;
+    if (msg) {
+      el.style.display = "flex";
+      if (txt) txt.textContent = msg;
+    } else {
+      el.style.display = "none";
+    }
+  }
+
+  function setServerBtnsDisabled(val) {
+    document.querySelectorAll(".hdpage-server-btn").forEach(b => b.disabled = val);
+  }
+
+  /* --- main: upload + hit server --- */
+  async function runHdUpscale(serverNum) {
     if (isProcessing) return;
-    const errEl = $("hdImageError");
-    if (errEl) errEl.textContent = "";
-
-    if (!selectedImageEl) {
-      if (errEl) errEl.textContent = "Pilih foto dulu.";
-      return;
-    }
-
-    const upscaler = getUpscaler();
-    if (!upscaler) {
-      if (errEl) errEl.textContent = "Library AI gagal dimuat. Cek koneksi internet lu, terus refresh halaman.";
-      return;
-    }
+    if (!selectedFile) { const e = $("hdError"); if (e) e.textContent = "Pilih foto dulu."; return; }
+    if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
 
     isProcessing = true;
-    setGenerateState("Memproses... 0%", false);
-    resetResultArea();
+    setServerBtnsDisabled(true);
+    const errEl = $("hdError");
+    if (errEl) errEl.textContent = "";
+    $("hdResult").style.display = "none";
 
     try {
-      const result = await upscaler.upscale(selectedImageEl, {
-        patchSize: 64,
-        padding: 2,
-        progress: (rate) => {
-          const pct = Math.round((typeof rate === "number" ? rate : 0) * 100);
-          setGenerateState(`Memproses... ${pct}%`, false);
+      // Step 1: upload ke catbox dapet URL publik
+      setStatus("Mengupload foto... (1/2)");
+      const imageUrl = await uploadToCatbox(selectedFile);
+
+      // Step 2: kirim ke server upscale sesuai pilihan
+      setStatus(`Memproses HD... Server ${serverNum} (2/2)`);
+      let resultUrl = "";
+
+      if (serverNum === 1) {
+        const res = await fetch(
+          `https://api.ikyyxd.my.id/tools/upscale?url=${encodeURIComponent(imageUrl)}`,
+          { signal: AbortSignal.timeout(90000) }
+        );
+        const json = await res.json();
+        if (!json?.status || !json?.result?.upscale) throw new Error("Server 1 gagal memproses.");
+        resultUrl = json.result.upscale;
+      }
+
+      else if (serverNum === 2) {
+        const res = await fetch(
+          `https://api.lexcode.biz.id/api/tools/upscale?url=${encodeURIComponent(imageUrl)}`,
+          { signal: AbortSignal.timeout(90000) }
+        );
+        const json = await res.json();
+        if (!json?.success || !json?.result) throw new Error("Server 2 gagal memproses.");
+        resultUrl = json.result;
+      }
+
+      else if (serverNum === 3) {
+        // Server 3 langsung balikin URL hasil (nggak perlu parse JSON)
+        resultUrl = `https://api.zenzxz.my.id/tools/upscale?url=${encodeURIComponent(imageUrl)}&scale=4`;
+      }
+
+      // Tampilkan hasil
+      setStatus(null);
+      const resultImg = $("hdResultImg");
+      const downloadBtn = $("hdDownloadBtn");
+      const resultBox = $("hdResult");
+      if (resultImg) resultImg.src = resultUrl;
+      if (downloadBtn) downloadBtn.href = resultUrl;
+      if (resultBox) resultBox.style.display = "flex";
+
+    } catch (err) {
+      setStatus(null);
+      const e = $("hdError");
+      if (e) {
+        if (err.name === "TimeoutError") {
+          e.textContent = `Server ${serverNum} timeout. Coba server lain.`;
+        } else {
+          e.textContent = err.message || `Server ${serverNum} error. Coba server lain.`;
         }
-      });
-
-      const resultImg = $("hdImageResultImg");
-      const downloadBtn = $("hdImageDownloadBtn");
-      const resultBox = $("hdImageResultBox");
-      if (resultImg) resultImg.src = result;
-      if (downloadBtn) downloadBtn.href = result;
-      if (resultBox) resultBox.style.display = "block";
-
-      setGenerateState("Generate Lagi", true);
-    } catch (e) {
-      if (errEl) errEl.textContent = "Gagal proses gambar. Coba foto lain atau refresh halaman.";
-      setGenerateState("Generate HD", true);
+      }
     } finally {
       isProcessing = false;
+      setServerBtnsDisabled(false);
     }
   }
 
-  function refreshHdImageGateState() {
-    const currentUser = window.__mikiAuthState?.currentUser;
-    const gateEl = $("hdImageLoginGate");
-    const mainEl = $("hdImageMain");
-    if (!gateEl || !mainEl) return;
-    if (currentUser) {
-      gateEl.style.display = "none";
-      mainEl.style.display = "block";
-    } else {
-      gateEl.style.display = "block";
-      mainEl.style.display = "none";
-    }
+  function hdReset() {
+    selectedFile = null;
+    const preview = $("hdPreviewImg");
+    const hint = $("hdUploadHint");
+    const servers = $("hdServers");
+    const resultBox = $("hdResult");
+    const errEl = $("hdError");
+    const fileInput = $("hdFileInput");
+    if (preview) { preview.src = ""; preview.style.display = "none"; }
+    if (hint) hint.style.display = "flex";
+    if (servers) servers.style.display = "none";
+    if (resultBox) resultBox.style.display = "none";
+    if (errEl) errEl.textContent = "";
+    if (fileInput) fileInput.value = "";
+    setStatus(null);
   }
 
-  function openHdImageModal() {
-    refreshHdImageGateState();
-    document.getElementById("hdImageModal")?.classList.add("active");
-  }
-
-  function closeHdImageModal() {
-    document.getElementById("hdImageModal")?.classList.remove("active");
-  }
-
+  /* --- init --- */
   document.addEventListener("DOMContentLoaded", () => {
-    const fileInput = $("hdImageFileInput");
+    const fileInput = $("hdFileInput");
     if (fileInput) fileInput.addEventListener("change", onFileSelected);
 
-    const genBtn = $("hdImageGenerateBtn");
-    if (genBtn) genBtn.addEventListener("click", generateHdImage);
+    // Refresh gate tiap kali status login berubah
+    const origOnAuth = window.__mikiOnAuthChange;
+    window.__mikiOnAuthChange = function () {
+      refreshGate();
+      if (origOnAuth) origOnAuth();
+    };
 
-    const modal = $("hdImageModal");
-    if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeHdImageModal(); });
+    // Juga cek sekarang (kalau udah login sebelumnya)
+    refreshGate();
+
+    // Polling ringan karena __mikiAuthState diisi async oleh auth.js (module)
+    const check = setInterval(() => {
+      if (window.__mikiAuthState !== undefined) {
+        refreshGate();
+        clearInterval(check);
+      }
+    }, 200);
   });
 
-  Object.assign(window, { openHdImageModal, closeHdImageModal });
+  Object.assign(window, { runHdUpscale, hdReset });
 })();
