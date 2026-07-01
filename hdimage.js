@@ -6,7 +6,7 @@
 
 (function () {
   /* ======== GANTI INI setelah Worker di-deploy di Cloudflare ======== */
-  const WORKER_URL = "https://mikiuniverse-244.pages.dev/";
+  const WORKER_URL = "https://miki-hd-proxy.mine14788.workers.dev/";
   /* =================================================================== */
 
   let selectedFile = null;
@@ -60,7 +60,7 @@
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
     if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
 
-    if (!WORKER_URL || WORKER_URL === "PASTE_URL_WORKER_LU_DI_SINI") {
+    if (!WORKER_URL || WORKER_URL === "https://miki-hd-proxy.mine14788.workers.dev/") {
       $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
       return;
     }
