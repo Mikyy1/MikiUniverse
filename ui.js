@@ -13,7 +13,6 @@ function openModal(id) { $(id)?.classList.add("active"); }
 function closeModal(id) { $(id)?.classList.remove("active"); }
 
 window.__mikiAuthState = { currentUser: null, currentProfile: null };
-window.__mikiEmailMode = "masuk";
 window.__mikiEditingProfile = false;
 
 function onAccountBtnClick() {
@@ -22,7 +21,7 @@ function onAccountBtnClick() {
 }
 
 function openAuthModal() {
-  ["googleAuthError", "emailAuthError", "guestAuthError", "adminAuthError"].forEach(id => { if ($(id)) $(id).textContent = ""; });
+  ["googleAuthError", "guestAuthError", "adminAuthError"].forEach(id => { if ($(id)) $(id).textContent = ""; });
   openModal("authModal");
 }
 function closeAuthModal() { closeModal("authModal"); }
@@ -30,14 +29,6 @@ function closeAuthModal() { closeModal("authModal"); }
 function switchAuthTab(tab) {
   document.querySelectorAll(".auth-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".auth-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === tab));
-}
-
-function switchEmailMode(mode) {
-  window.__mikiEmailMode = mode;
-  document.querySelectorAll(".auth-subtab").forEach(b => b.classList.toggle("active", b.dataset.sub === mode));
-  $("emailNicknameField").style.display = mode === "daftar" ? "flex" : "none";
-  $("emailSubmitBtn").textContent = mode === "daftar" ? "Daftar" : "Masuk";
-  $("emailAuthError").textContent = "";
 }
 
 function openProfileModal() {
@@ -94,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
    gives the user a clear message instead of doing nothing at all. */
 const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman, atau cek koneksi internet lu.";
 [
-  "loginGoogle", "submitEmailAuth", "loginGuest", "submitAdminLogin",
+  "loginGoogle", "loginGuest", "submitAdminLogin",
   "onAvatarFileChange", "saveProfile", "adminSearchUser", "adminSaveTitle",
   "adminToggleRole", "adminTogglePremium", "logoutUser",
   "onPresetPhotoChange", "submitPresetPost", "deletePresetPost",
@@ -105,7 +96,7 @@ const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman
 
 /* expose helpers for window assignment */
 Object.assign(window, {
-  onAccountBtnClick, openAuthModal, closeAuthModal, switchAuthTab, switchEmailMode,
+  onAccountBtnClick, openAuthModal, closeAuthModal, switchAuthTab,
   openProfileModal, closeProfileModal, openAdminPanel, closeAdminModal,
   toggleProfileEdit, cancelProfileEdit
 });

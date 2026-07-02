@@ -406,29 +406,6 @@ async function loginGoogle() {
   }
 }
 
-/* ---------- Email (masuk/daftar, mode dibaca dari ui.js) ---------- */
-async function submitEmailAuth() {
-  const email = $("emailInput").value.trim();
-  const password = $("passwordInput").value;
-  const errEl = $("emailAuthError");
-  errEl.textContent = "";
-  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
-  if (password.length < 6) { errEl.textContent = "Password minimal 6 karakter."; return; }
-  try {
-    if (window.__mikiEmailMode === "daftar") {
-      const nickname = $("emailNickname").value.trim() || email.split("@")[0];
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      try { await updateProfile(cred.user, { displayName: nickname }); } catch (_) {}
-      await ensureUserDoc(cred.user, { provider: "email", displayNameOverride: nickname });
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
-    closeAuthModal();
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
-  }
-}
-
 /* ---------- Guest ---------- */
 async function loginGuest() {
   const errEl = $("guestAuthError");
@@ -588,7 +565,7 @@ async function adminTogglePremium() {
 
 /* ---------- overwrite ui.js placeholders now that Firebase is ready ---------- */
 Object.assign(window, {
-  loginGoogle, submitEmailAuth, loginGuest, submitAdminLogin,
+  loginGoogle, loginGuest, submitAdminLogin,
   onAvatarFileChange, saveProfile,
   adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
   logoutUser,

@@ -119,7 +119,6 @@ function showMikiDebugBanner(msg){
 
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="google" onclick="switchAuthTab('google')">Google</button>
-      <button class="auth-tab" data-tab="email" onclick="switchAuthTab('email')">Email</button>
       <button class="auth-tab" data-tab="guest" onclick="switchAuthTab('guest')">Guest</button>
       <button class="auth-tab" data-tab="admin" onclick="switchAuthTab('admin')">Admin</button>
     </div>
@@ -131,27 +130,6 @@ function showMikiDebugBanner(msg){
       </button>
       <p class="auth-hint">Nama & foto profil lu otomatis kepake dari akun Google.</p>
       <p class="auth-error" id="googleAuthError"></p>
-    </div>
-
-    <div class="auth-panel" data-panel="email">
-      <div class="auth-subtabs">
-        <button class="auth-subtab active" data-sub="masuk" onclick="switchEmailMode('masuk')">Masuk</button>
-        <button class="auth-subtab" data-sub="daftar" onclick="switchEmailMode('daftar')">Daftar</button>
-      </div>
-      <div class="auth-field email-nickname-field" id="emailNicknameField" style="display:none">
-        <label>Nickname</label>
-        <input type="text" id="emailNickname" placeholder="Nama panggilan lu" maxlength="24">
-      </div>
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="emailInput" placeholder="nama@email.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" autocomplete="current-password">
-      </div>
-      <p class="auth-error" id="emailAuthError"></p>
-      <button class="btn auth-submit-btn" type="button" id="emailSubmitBtn" onclick="submitEmailAuth()">Masuk</button>
     </div>
 
     <div class="auth-panel" data-panel="guest">

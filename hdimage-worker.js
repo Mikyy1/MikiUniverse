@@ -1,12 +1,6 @@
 /**
  * MIKI UNIVERSE — HD Image Proxy Worker
- * Cara pasang:
- * 1. Cloudflare dashboard → Workers & Pages → Create → Create Worker
- * 2. Kasih nama misal "miki-hd-proxy"
- * 3. Edit code → hapus semua isi default → paste SELURUH isi file ini
- * 4. Deploy
- * 5. Catat URL worker-nya (miki-hd-proxy.NAMAKAMU.workers.dev)
- *    → Paste URL itu di hdimage.js sebagai nilai WORKER_URL
+ * Coba beberapa image host secara berurutan kalau ada yang gagal.
  */
 
 const CORS_HEADERS = {
@@ -22,18 +16,71 @@ function json(data, status = 200) {
   });
 }
 
-async function uploadToCatbox(imageBlob, filename) {
+/* --- Upload ke beberapa host, pakai yang pertama berhasil --- */
+
+async function uploadTo0x0(imageBlob, filename) {
+  const form = new FormData();
+  form.append("file", imageBlob, filename);
+  const res = await fetch("https://0x0.st", {
+    method: "POST",
+    body: form,
+    signal: AbortSignal.timeout(30000)
+  });
+  const text = (await res.text()).trim();
+  if (!text.startsWith("https://")) throw new Error("0x0.st gagal: " + text.slice(0, 80));
+  return text;
+}
+
+async function uploadToTmpfiles(imageBlob, filename) {
+  const form = new FormData();
+  form.append("file", imageBlob, filename);
+  const res = await fetch("https://tmpfiles.org/api/v1/upload", {
+    method: "POST",
+    body: form,
+    signal: AbortSignal.timeout(30000)
+  });
+  const data = await res.json();
+  if (!data?.data?.url) throw new Error("tmpfiles gagal");
+  // tmpfiles balikin URL viewer, ubah jadi direct download
+  return data.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+}
+
+async function uploadToLitterbox(imageBlob, filename) {
   const form = new FormData();
   form.append("reqtype", "fileupload");
-  form.append("fileToUpload", imageBlob, filename || "image.jpg");
-  const res = await fetch("https://catbox.moe/user/api.php", {
+  form.append("time", "1h");
+  form.append("fileToUpload", imageBlob, filename);
+  const res = await fetch("https://litterbox.catbox.moe/resources/internals/api.php", {
     method: "POST",
-    body: form
+    body: form,
+    signal: AbortSignal.timeout(30000)
   });
-  const text = await res.text();
-  if (!text.startsWith("https://")) throw new Error("Upload catbox gagal: " + text.slice(0, 100));
-  return text.trim();
+  const text = (await res.text()).trim();
+  if (!text.startsWith("https://")) throw new Error("litterbox gagal: " + text.slice(0, 80));
+  return text;
 }
+
+async function uploadImage(imageBlob, filename) {
+  const hosts = [
+    { name: "0x0.st", fn: () => uploadTo0x0(imageBlob, filename) },
+    { name: "litterbox", fn: () => uploadToLitterbox(imageBlob, filename) },
+    { name: "tmpfiles", fn: () => uploadToTmpfiles(imageBlob, filename) }
+  ];
+  const errors = [];
+  for (const host of hosts) {
+    try {
+      const url = await host.fn();
+      console.log(`Upload berhasil via ${host.name}: ${url}`);
+      return url;
+    } catch (e) {
+      errors.push(`${host.name}: ${e.message}`);
+      console.log(`${host.name} gagal: ${e.message}`);
+    }
+  }
+  throw new Error("Semua upload host gagal: " + errors.join(" | "));
+}
+
+/* --- Upscale servers --- */
 
 async function upscaleServer1(imageUrl) {
   const res = await fetch(
@@ -41,7 +88,7 @@ async function upscaleServer1(imageUrl) {
     { signal: AbortSignal.timeout(90000) }
   );
   const data = await res.json();
-  if (!data?.status || !data?.result?.upscale) throw new Error("Server 1 gagal.");
+  if (!data?.status || !data?.result?.upscale) throw new Error("Server 1 gagal: " + JSON.stringify(data).slice(0, 100));
   return data.result.upscale;
 }
 
@@ -51,15 +98,14 @@ async function upscaleServer2(imageUrl) {
     { signal: AbortSignal.timeout(90000) }
   );
   const data = await res.json();
-  if (!data?.success || !data?.result) throw new Error("Server 2 gagal.");
+  if (!data?.success || !data?.result) throw new Error("Server 2 gagal: " + JSON.stringify(data).slice(0, 100));
   return data.result;
 }
 
 async function upscaleServer3(imageUrl) {
-  // Server 3 balikin URL langsung, kita fetch buat cek valid dulu
   const resultUrl = `https://api.zenzxz.my.id/tools/upscale?url=${encodeURIComponent(imageUrl)}&scale=4`;
-  const check = await fetch(resultUrl, { method: "HEAD", signal: AbortSignal.timeout(90000) });
-  if (!check.ok) throw new Error("Server 3 gagal.");
+  const check = await fetch(resultUrl, { signal: AbortSignal.timeout(90000) });
+  if (!check.ok) throw new Error(`Server 3 response ${check.status}`);
   return resultUrl;
 }
 
@@ -80,10 +126,8 @@ export default {
     }
 
     try {
-      // 1. Upload ke catbox
-      const imageUrl = await uploadToCatbox(imageBlob, filename);
+      const imageUrl = await uploadImage(imageBlob, filename);
 
-      // 2. Upscale sesuai server
       let resultUrl;
       if (server === 1) resultUrl = await upscaleServer1(imageUrl);
       else if (server === 2) resultUrl = await upscaleServer2(imageUrl);
