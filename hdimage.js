@@ -130,10 +130,10 @@
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
     if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
 
-    if (!WORKER_URL || WORKER_URL === "https://miki-hd-proxy.mine14788.workers.dev") {
-      $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
-      return;
-    }
+    if (!WORKER_URL) {
+  $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
+  return;
+}
 
     // Cek rate limit
     const check = await window.hdCheckUsage?.();
