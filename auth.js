@@ -419,27 +419,40 @@ async function loginGuest() {
   }
 }
 
-/* ---------- Admin login ---------- */
-async function submitAdminLogin() {
-  const email = $("adminEmailInput").value.trim();
-  const password = $("adminPasswordInput").value;
-  const errEl = $("adminAuthError");
-  errEl.textContent = "";
-  if (!email || !password) { errEl.textContent = "Email & password wajib diisi."; return; }
+/* ---------- HD Image rate limit (5x/day per user) ---------- */
+const HD_DAILY_LIMIT = 5;
+
+async function hdCheckUsage() {
+  const { currentUser } = window.__mikiAuthState;
+  if (!currentUser) return { ok: false, reason: "Login dulu." };
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const profile = await ensureUserDoc(cred.user, { provider: "email" });
-    if (profile.role !== "admin") {
-      await signOut(auth);
-      errEl.textContent = "Akun ini bukan admin.";
-      return;
+    const ref = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(ref);
+    const data = snap.data() || {};
+    const usageDate = data.hdUsageDate || "";
+    const usageCount = usageDate === today ? (data.hdUsageCount || 0) : 0;
+    if (usageCount >= HD_DAILY_LIMIT) {
+      return { ok: false, reason: `Batas harian tercapai (${HD_DAILY_LIMIT}x/hari). Coba lagi besok.` };
     }
-    closeAuthModal();
-    openProfileModal();
-    setTimeout(openAdminPanel, 250);
-  } catch (e) {
-    errEl.textContent = friendlyAuthError(e);
+    return { ok: true, used: usageCount, limit: HD_DAILY_LIMIT };
+  } catch (_) {
+    return { ok: true, used: 0, limit: HD_DAILY_LIMIT }; // fail open
   }
+}
+
+async function hdIncrementUsage() {
+  const { currentUser } = window.__mikiAuthState;
+  if (!currentUser) return;
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const ref = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(ref);
+    const data = snap.data() || {};
+    const usageDate = data.hdUsageDate || "";
+    const prev = usageDate === today ? (data.hdUsageCount || 0) : 0;
+    await updateDoc(ref, { hdUsageDate: today, hdUsageCount: prev + 1, updatedAt: serverTimestamp() });
+  } catch (_) {}
 }
 
 /* ---------- avatar upload + save profile ---------- */
@@ -565,12 +578,13 @@ async function adminTogglePremium() {
 
 /* ---------- overwrite ui.js placeholders now that Firebase is ready ---------- */
 Object.assign(window, {
-  loginGoogle, loginGuest, submitAdminLogin,
+  loginGoogle, loginGuest,
   onAvatarFileChange, saveProfile,
   adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
   logoutUser,
   onPresetPhotoChange, submitPresetPost, deletePresetPost,
-  togglePresetEdit, savePresetEdit
+  togglePresetEdit, savePresetEdit,
+  hdCheckUsage, hdIncrementUsage
 });
 
 console.log("[Miki Auth] Firebase siap & nyambung.");

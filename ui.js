@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
    gives the user a clear message instead of doing nothing at all. */
 const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman, atau cek koneksi internet lu.";
 [
-  "loginGoogle", "loginGuest", "submitAdminLogin",
+  "loginGoogle", "loginGuest",
   "onAvatarFileChange", "saveProfile", "adminSearchUser", "adminSaveTitle",
   "adminToggleRole", "adminTogglePremium", "logoutUser",
   "onPresetPhotoChange", "submitPresetPost", "deletePresetPost",

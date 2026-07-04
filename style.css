@@ -1177,3 +1177,95 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
 @media (max-width: 480px) {
   .hdpage-server-btns { flex-direction: column; }
 }
+
+/* ============================================================
+   AUTH MODAL BARU — Google + Guest only, no tabs
+   ============================================================ */
+.auth-buttons-new { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+
+.auth-google-new {
+  width: 100%; padding: 14px 20px; border-radius: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 15px; font-weight: 600; color: #fff;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+  transition: background .2s, border-color .2s;
+}
+.auth-google-new:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); }
+
+.auth-guest-new {
+  width: 100%; padding: 14px 20px; border-radius: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 15px; font-weight: 600; color: #c4c4cc;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  transition: background .2s;
+}
+.auth-guest-new:hover { background: rgba(255,255,255,.07); }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 12px; color: #4a4a52; font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.08);
+}
+
+/* ============================================================
+   HD IMAGE — progress bar + before/after slider
+   ============================================================ */
+.hdpage-loading { margin-bottom: 12px; }
+.hdpage-loading-info {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12.5px; color: #a7a7b4; margin-bottom: 8px;
+}
+#hdLoadingPct { font-weight: 800; color: #fff; font-size: 13px; }
+.hdpage-progress-track {
+  width: 100%; height: 6px; border-radius: 999px;
+  background: rgba(255,255,255,.08); overflow: hidden;
+}
+.hdpage-progress-bar {
+  height: 100%; border-radius: 999px; width: 0%;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  transition: width .12s ease-out;
+  box-shadow: 0 0 10px rgba(167,139,250,.5);
+}
+
+/* slider */
+.hd-slider-wrap { margin-bottom: 14px; }
+.hd-slider-inner {
+  position: relative; width: 100%; border-radius: 18px;
+  overflow: hidden; user-select: none; touch-action: none;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.hd-slider-img { display: block; width: 100%; max-height: 420px; object-fit: contain; }
+.hd-after-wrap {
+  position: absolute; inset: 0; width: 100%; overflow: hidden;
+  clip-path: inset(0 50% 0 0); will-change: clip-path;
+}
+.hd-after-wrap .hd-slider-img { position: absolute; top: 0; left: 0; }
+.hd-slider-divider {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  width: 2px; transform: translateX(-50%);
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 0 12px rgba(255,255,255,.3);
+  z-index: 4; pointer-events: none; will-change: left;
+}
+.hd-slider-label {
+  position: absolute; top: 12px; padding: 5px 10px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .6px;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12); color: #fff; z-index: 3;
+}
+.hd-label-left { left: 12px; }
+.hd-label-right { right: 12px; background: rgba(255,255,255,.9); color: #000; }
+.hd-slider-handle {
+  position: absolute; top: 50%; left: 50%; z-index: 5;
+  transform: translate(-50%, -50%);
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(255,255,255,.18); color: #fff;
+  display: grid; place-items: center; pointer-events: none; will-change: left;
+  box-shadow: 0 0 0 6px rgba(255,255,255,.1), 0 8px 24px rgba(0,0,0,.4);
+}
+.hd-slider-handle .icon { font-size: 16px; }
+.hd-slider-range {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: ew-resize; z-index: 6; touch-action: none;
+}
