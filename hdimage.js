@@ -1,8 +1,6 @@
 /* =========================================
    MIKI UNIVERSE — HD Image Page
-   - Rate limit: 5x/hari per akun
-   - Loading progress bar 0-100%
-   - Before/After slider hasil
+   Fixed: before/after direction, slider double-init, guest gate
    ========================================= */
 
 (function () {
@@ -13,10 +11,11 @@
   let selectedDataURL = null;
   let isProcessing = false;
   let progressInterval = null;
+  let sliderInited = false;
 
   function $(id) { return document.getElementById(id); }
 
-  /* --- gate: cek login --- */
+  /* --- gate --- */
   function refreshGate() {
     const user = window.__mikiAuthState?.currentUser;
     const gate = $("hdLoginGate");
@@ -31,7 +30,6 @@
     const file = e.target.files?.[0];
     if (!file) return;
     selectedFile = file;
-
     const reader = new FileReader();
     reader.onload = () => {
       selectedDataURL = reader.result;
@@ -41,6 +39,7 @@
       $("hdServers").style.display = "block";
       $("hdResult").style.display = "none";
       $("hdError").textContent = "";
+      sliderInited = false;
     };
     reader.readAsDataURL(file);
   }
@@ -51,13 +50,10 @@
     const bar = $("hdProgressBar");
     const label = $("hdLoadingLabel");
     const pct = $("hdLoadingPct");
-    if (!loading) return;
+    if (!loading) return { phase2(){}, done(){}, error(){} };
 
     loading.style.display = "block";
-    let current = 0;
-    let target = 45;
-    let currentPhase = 1;
-
+    let current = 0, target = 45, currentPhase = 1;
     if (progressInterval) clearInterval(progressInterval);
     progressInterval = setInterval(() => {
       if (current < target) {
@@ -71,22 +67,13 @@
     }, 80);
 
     return {
-      phase2() {
-        target = 92;
-        currentPhase = 2;
-      },
+      phase2() { target = 92; currentPhase = 2; },
       done() {
         clearInterval(progressInterval);
-        current = 100; target = 100;
-        bar.style.width = "100%";
-        pct.textContent = "100%";
-        label.textContent = "Selesai!";
+        bar.style.width = "100%"; pct.textContent = "100%"; label.textContent = "Selesai!";
         setTimeout(() => { if (loading) loading.style.display = "none"; }, 700);
       },
-      error() {
-        clearInterval(progressInterval);
-        if (loading) loading.style.display = "none";
-      }
+      error() { clearInterval(progressInterval); if (loading) loading.style.display = "none"; }
     };
   }
 
@@ -94,8 +81,12 @@
     document.querySelectorAll(".hdpage-server-btn").forEach(b => b.disabled = val);
   }
 
-  /* --- init slider --- */
+  /* --- slider (dipanggil SEKALI setelah kedua gambar siap) ---
+     FIX 1: clip-path inset dari KIRI biar before=kiri, after=kanan (standar)
+     FIX 2: satu initSlider call doang, pakai flag sliderInited
+  */
   function initSlider(beforeSrc, afterSrc) {
+    if (sliderInited) return;
     const beforeImg = $("hdBeforeImg");
     const afterImg = $("hdAfterImg");
     const afterWrap = $("hdAfterWrap");
@@ -105,26 +96,43 @@
     if (!beforeImg || !afterImg || !range) return;
 
     beforeImg.src = beforeSrc;
-    afterImg.src = afterSrc;
-    range.value = 50;
 
-    let pending = false;
-    function applySlider() {
-      pending = false;
-      const v = range.value;
-      afterWrap.style.clipPath = `inset(0 ${100 - v}% 0 0)`;
-      handle.style.left = v + "%";
-      divider.style.left = v + "%";
+    // Tunggu afterImg loaded baru init, biar container punya tinggi
+    function doInit() {
+      sliderInited = true;
+      range.value = 50;
+
+      // Remove existing listener dulu (bersih)
+      const newRange = range.cloneNode(true);
+      range.parentNode.replaceChild(newRange, range);
+
+      function applySlider() {
+        const v = newRange.value;
+        // FIX: inset dari kiri → before kiri, after kanan
+        afterWrap.style.clipPath = `inset(0 0 0 ${v}%)`;
+        handle.style.left = v + "%";
+        if (divider) divider.style.left = v + "%";
+      }
+
+      let pending = false;
+      newRange.addEventListener("input", () => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; applySlider(); });
+      });
+      applySlider();
     }
-    range.addEventListener("input", () => {
-      if (pending) return;
-      pending = true;
-      requestAnimationFrame(applySlider);
-    });
-    applySlider();
+
+    if (afterImg.src === afterSrc && afterImg.complete) {
+      doInit();
+    } else {
+      afterImg.onload = doInit;
+      afterImg.onerror = doInit; // init anyway even on error
+      afterImg.src = afterSrc;
+    }
   }
 
-  /* --- main: upload + hit server --- */
+  /* --- main --- */
   async function runHdUpscale(serverNum) {
     if (isProcessing) return;
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
@@ -135,15 +143,12 @@
   return;
 }
 
-    // Cek rate limit
     const check = await window.hdCheckUsage?.();
-    if (check && !check.ok) {
-      $("hdError").textContent = check.reason;
-      return;
-    }
+    if (check && !check.ok) { $("hdError").textContent = check.reason; return; }
     const usedCount = check?.used ?? 0;
 
     isProcessing = true;
+    sliderInited = false;
     setServerBtnsDisabled(true);
     $("hdError").textContent = "";
     $("hdResult").style.display = "none";
@@ -154,65 +159,40 @@
     );
 
     try {
-      // Step 1 progress naik ke 45%
       const form = new FormData();
       form.append("server", String(serverNum));
       form.append("image", selectedFile, selectedFile.name || "image.jpg");
       form.append("filename", selectedFile.name || "image.jpg");
-
-      // Pindah ke phase 2 setelah 2 detik (simulasi upload selesai)
       setTimeout(() => progress.phase2(), 2000);
 
       const res = await fetch(WORKER_URL, {
-        method: "POST",
-        body: form,
+        method: "POST", body: form,
         signal: AbortSignal.timeout(120000)
       });
       const data = await res.json();
-
-      if (!data?.ok || !data?.result) {
-        throw new Error(data?.error || `Server ${serverNum} gagal. Coba server lain.`);
-      }
+      if (!data?.ok || !data?.result) throw new Error(data?.error || `Server ${serverNum} gagal. Coba server lain.`);
 
       progress.done();
-
-      // Increment usage
       await window.hdIncrementUsage?.();
 
-      // Tampilkan slider before/after
-      const resultBox = $("hdResult");
       const downloadBtn = $("hdDownloadBtn");
+      const resultBox = $("hdResult");
       if (downloadBtn) downloadBtn.href = data.result;
       if (resultBox) resultBox.style.display = "flex";
 
-      // Init slider setelah gambar after ke-load
-      const afterImg = $("hdAfterImg");
-      if (afterImg) {
-        afterImg.onload = () => initSlider(selectedDataURL, data.result);
-        afterImg.onerror = () => {
-          // Fallback kalau gambar nggak bisa di-load di img tag (CORS), tampilkan link aja
-          afterImg.src = "";
-          $("hdBeforeImg").src = selectedDataURL;
-        };
-      }
+      // FIX 2: SATU panggilan initSlider aja
       initSlider(selectedDataURL, data.result);
 
-      // Update sisa pemakaian
-      const newUsed = usedCount + 1;
-      const remaining = DAILY_LIMIT - newUsed;
+      const remaining = DAILY_LIMIT - usedCount - 1;
       $("hdError").style.color = remaining <= 1 ? "#f59e0b" : "#22c55e";
       $("hdError").textContent = `Berhasil! Sisa pemakaian hari ini: ${remaining}x`;
-      setTimeout(() => {
-        $("hdError").textContent = "";
-        $("hdError").style.color = "";
-      }, 4000);
+      setTimeout(() => { $("hdError").textContent = ""; $("hdError").style.color = ""; }, 4000);
 
     } catch (err) {
       progress.error();
-      const msg = err.name === "TimeoutError"
+      $("hdError").textContent = err.name === "TimeoutError"
         ? `Server ${serverNum} timeout. Coba server lain.`
         : (err.message || `Error. Coba server lain.`);
-      $("hdError").textContent = msg;
       $("hdError").style.color = "";
     } finally {
       isProcessing = false;
@@ -221,29 +201,33 @@
   }
 
   function hdReset() {
-    selectedFile = null;
-    selectedDataURL = null;
+    selectedFile = null; selectedDataURL = null; sliderInited = false;
     if (progressInterval) clearInterval(progressInterval);
-    $("hdPreviewImg").src = "";
-    $("hdPreviewImg").style.display = "none";
-    $("hdUploadHint").style.display = "flex";
-    $("hdServers").style.display = "none";
-    $("hdResult").style.display = "none";
-    $("hdLoading").style.display = "none";
-    $("hdError").textContent = "";
-    $("hdError").style.color = "";
-    $("hdFileInput").value = "";
+    const p = $("hdPreviewImg"); if (p) { p.src = ""; p.style.display = "none"; }
+    const h = $("hdUploadHint"); if (h) h.style.display = "flex";
+    const s = $("hdServers"); if (s) s.style.display = "none";
+    const r = $("hdResult"); if (r) r.style.display = "none";
+    const l = $("hdLoading"); if (l) l.style.display = "none";
+    const e = $("hdError"); if (e) { e.textContent = ""; e.style.color = ""; }
+    const f = $("hdFileInput"); if (f) f.value = "";
   }
 
   /* --- init --- */
   document.addEventListener("DOMContentLoaded", () => {
     const fileInput = $("hdFileInput");
     if (fileInput) fileInput.addEventListener("change", onFileSelected);
+
+    // FIX 3: refreshGate dipanggil langsung + dari auth callback
     window.__mikiOnAuthChange = refreshGate;
     refreshGate();
+
+    // Polling buat kasus auth.js module load duluan
     const check = setInterval(() => {
-      if (window.__mikiAuthState !== undefined) { refreshGate(); clearInterval(check); }
-    }, 200);
+      if (window.__mikiAuthState !== undefined) {
+        refreshGate();
+        clearInterval(check);
+      }
+    }, 150);
   });
 
   Object.assign(window, { runHdUpscale, hdReset });

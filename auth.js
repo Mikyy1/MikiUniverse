@@ -401,6 +401,7 @@ async function loginGoogle() {
     const cred = await signInWithPopup(auth, new GoogleAuthProvider());
     await ensureUserDoc(cred.user, { provider: "google" });
     closeAuthModal();
+    window.__mikiOnAuthChange?.();
   } catch (e) {
     errEl.textContent = friendlyAuthError(e);
   }
@@ -414,6 +415,7 @@ async function loginGuest() {
     const cred = await signInAnonymously(auth);
     await ensureUserDoc(cred.user, { provider: "guest" });
     closeAuthModal();
+    window.__mikiOnAuthChange?.();
   } catch (e) {
     errEl.textContent = friendlyAuthError(e);
   }
