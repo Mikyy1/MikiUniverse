@@ -5,7 +5,7 @@
 // ============================================================
 export const firebaseConfig = {
   apiKey: "AIzaSyCop8JoFqb1IogjonyEZOOWT7olkhwhKUM",
-  authDomain: "miki-universe.firebaseapp.com",
+  authDomain: "auth.mikiuniverse.my.id",
   projectId: "miki-universe",
   storageBucket: "miki-universe.firebasestorage.app",
   messagingSenderId: "628595985901",
