@@ -1269,3 +1269,28 @@ footer { text-align: center; padding: 40px 22px 20px; color: #555; font-size: 14
   position: absolute; inset: 0; width: 100%; height: 100%;
   opacity: 0; cursor: ew-resize; z-index: 6; touch-action: none;
 }
+
+/* ============================================================
+   HD IMAGE — locked gate (Google only)
+   ============================================================ */
+.hdpage-gate-locked {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; margin-bottom: 16px;
+}
+.hdpage-gate-blur-bg {
+  width: 100%; padding: 32px 24px; border-radius: 24px;
+  background: rgba(10,10,10,.82);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.10);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.hdpage-lock-icon {
+  font-size: 48px; color: #a78bfa; margin-bottom: 4px;
+  filter: drop-shadow(0 0 14px rgba(167,139,250,.4));
+}
+.hdpage-gate-blur-bg h3 { font-size: 20px; color: #fff; margin: 0; }
+.hdpage-gate-blur-bg p { font-size: 13.5px; color: #c4c4cc; margin: 0; line-height: 1.5; }
+.hdpage-gate-sub { font-size: 12px !important; color: #6f6f78 !important; }
+.hdpage-gate-btn { width: 100%; margin-top: 6px; }

@@ -15,14 +15,22 @@
 
   function $(id) { return document.getElementById(id); }
 
-  /* --- gate --- */
+  /* --- gate: cek login (wajib Google, bukan tamu) --- */
   function refreshGate() {
     const user = window.__mikiAuthState?.currentUser;
+    const profile = window.__mikiAuthState?.currentProfile;
     const gate = $("hdLoginGate");
     const main = $("hdMain");
     if (!gate || !main) return;
-    if (user) { gate.style.display = "none"; main.style.display = "block"; }
-    else { gate.style.display = "flex"; main.style.display = "none"; }
+    // Hanya izinkan user Google (bukan anonymous/guest)
+    const isGoogle = user && !user.isAnonymous && profile?.provider === "google";
+    if (isGoogle) {
+      gate.style.display = "none";
+      main.style.display = "block";
+    } else {
+      gate.style.display = "flex";
+      main.style.display = "none";
+    }
   }
 
   /* --- file pilih --- */
