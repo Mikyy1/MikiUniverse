@@ -273,18 +273,9 @@ function showMikiDebugBanner(msg){
     <input type="file" id="hdFileInput" accept="image/*" style="display:none">
 
     <div class="hdpage-servers" id="hdServers" style="display:none">
-      <p class="hdpage-server-label">Pilih server upscale:</p>
-      <div class="hdpage-server-btns">
-        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(1)">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 1
-        </button>
-        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(2)">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 2
-        </button>
-        <button class="btn hdpage-server-btn" type="button" onclick="runHdUpscale(3)">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Server 3
-        </button>
-      </div>
+      <button class="btn hdpage-server-btn" type="button" id="hdGenerateBtn" onclick="runHdUpscale()">
+        <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Generate
+      </button>
     </div>
 
     <div class="hdpage-loading" id="hdLoading" style="display:none">

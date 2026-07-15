@@ -85,8 +85,9 @@
     };
   }
 
-  function setServerBtnsDisabled(val) {
-    document.querySelectorAll(".hdpage-server-btn").forEach(b => b.disabled = val);
+  function setGenerateBtnDisabled(val) {
+    const btn = $("hdGenerateBtn");
+    if (btn) btn.disabled = val;
   }
 
   /* --- slider (dipanggil SEKALI setelah kedua gambar siap) ---
@@ -141,15 +142,15 @@
   }
 
   /* --- main --- */
-  async function runHdUpscale(serverNum) {
+  async function runHdUpscale() {
     if (isProcessing) return;
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
     if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
 
     if (!WORKER_URL) {
-  $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
-  return;
-}
+      $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
+      return;
+    }
 
     const check = await window.hdCheckUsage?.();
     if (check && !check.ok) { $("hdError").textContent = check.reason; return; }
@@ -157,18 +158,17 @@
 
     isProcessing = true;
     sliderInited = false;
-    setServerBtnsDisabled(true);
+    setGenerateBtnDisabled(true);
     $("hdError").textContent = "";
     $("hdResult").style.display = "none";
 
     const progress = startProgress(
       `Mengupload foto... (Sisa hari ini: ${DAILY_LIMIT - usedCount - 1}x)`,
-      `Server ${serverNum} memproses HD...`
+      `Memproses HD...`
     );
 
     try {
       const form = new FormData();
-      form.append("server", String(serverNum));
       form.append("image", selectedFile, selectedFile.name || "image.jpg");
       form.append("filename", selectedFile.name || "image.jpg");
       setTimeout(() => progress.phase2(), 2000);
@@ -178,7 +178,7 @@
         signal: AbortSignal.timeout(120000)
       });
       const data = await res.json();
-      if (!data?.ok || !data?.result) throw new Error(data?.error || `Server ${serverNum} gagal. Coba server lain.`);
+      if (!data?.ok || !data?.result) throw new Error(data?.error || `Gagal memproses. Coba lagi.`);
 
       progress.done();
       await window.hdIncrementUsage?.();
@@ -199,12 +199,12 @@
     } catch (err) {
       progress.error();
       $("hdError").textContent = err.name === "TimeoutError"
-        ? `Server ${serverNum} timeout. Coba server lain.`
-        : (err.message || `Error. Coba server lain.`);
+        ? `Timeout. Coba lagi.`
+        : (err.message || `Error. Coba lagi.`);
       $("hdError").style.color = "";
     } finally {
       isProcessing = false;
-      setServerBtnsDisabled(false);
+      setGenerateBtnDisabled(false);
     }
   }
 
