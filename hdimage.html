@@ -292,12 +292,48 @@ function showMikiDebugBanner(msg){
 
     <div class="hdpage-servers" id="hdServers" style="display:none">
       <div id="hdTurnstileWrap" style="display:flex;justify-content:center;margin-bottom:14px">
-        <div id="hdTurnstile" class="cf-turnstile"
-             data-sitekey="0x4AAAAAAD2gebeMs9vFT1SW"
-             data-callback="onHdTurnstileSuccess"
-             data-expired-callback="onHdTurnstileExpired"
-             data-error-callback="onHdTurnstileExpired"></div>
+        <div id="hdCaptchaBox" class="hd-captcha-box" onclick="startHdCaptcha()">
+          <div id="hdCaptchaCheckbox" class="hd-captcha-checkbox">
+            <svg class="hd-captcha-check-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="hd-captcha-spinner"></div>
+          </div>
+          <span id="hdCaptchaLabel" class="hd-captcha-label">Klik buat verifikasi</span>
+        </div>
       </div>
+      <style>
+        .hd-captcha-box{
+          display:flex; align-items:center; gap:12px;
+          padding:12px 18px; border-radius:14px; cursor:pointer; user-select:none;
+          background:rgba(255,255,255,.05);
+          border:1px solid rgba(255,255,255,.12);
+          backdrop-filter:blur(10px);
+          transition:border-color .2s ease, background .2s ease;
+        }
+        .hd-captcha-box:hover{ border-color:rgba(192,132,252,.5); }
+        .hd-captcha-box.is-verified{ border-color:rgba(74,222,128,.5); background:rgba(74,222,128,.08); }
+        .hd-captcha-box.is-error{ border-color:rgba(248,113,113,.6); background:rgba(248,113,113,.08); }
+        .hd-captcha-checkbox{
+          position:relative; width:26px; height:26px; border-radius:7px; flex-shrink:0;
+          border:2px solid rgba(255,255,255,.35);
+          display:flex; align-items:center; justify-content:center;
+          background:linear-gradient(135deg, rgba(168,85,247,.15), rgba(236,72,153,.15));
+          transition:border-color .2s ease, background .2s ease;
+        }
+        .hd-captcha-check-icon{ width:16px; height:16px; color:#fff; opacity:0; transform:scale(.5); transition:all .25s ease; }
+        .hd-captcha-box.is-verified .hd-captcha-checkbox{ border-color:#4ade80; background:linear-gradient(135deg,#4ade80,#22c55e); }
+        .hd-captcha-box.is-verified .hd-captcha-check-icon{ opacity:1; transform:scale(1); }
+        .hd-captcha-spinner{
+          position:absolute; width:16px; height:16px; border-radius:50%;
+          border:2px solid rgba(255,255,255,.25); border-top-color:#c084fc;
+          display:none; animation:hdCaptchaSpin .7s linear infinite;
+        }
+        .hd-captcha-box.is-verifying .hd-captcha-spinner{ display:block; }
+        .hd-captcha-box.is-verifying .hd-captcha-checkbox{ border-color:#c084fc; }
+        @keyframes hdCaptchaSpin{ to{ transform:rotate(360deg); } }
+        .hd-captcha-label{ font-size:.92em; opacity:.85; }
+      </style>
       <button class="btn hdpage-server-btn" type="button" id="hdGenerateBtn" onclick="runHdUpscale()" disabled>
         <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Generate
       </button>
@@ -422,7 +458,6 @@ function showMikiDebugBanner(msg){
   </a>
 </div>
 
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>

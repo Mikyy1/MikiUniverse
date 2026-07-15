@@ -1,6 +1,6 @@
 /* =========================================
    MIKI UNIVERSE — HD Image Page
-   + Turnstile captcha wajib
+   + Captcha custom (proof-of-work, gak pake layanan pihak ketiga)
    + Cek maintenance flag dari admin panel
    + Error yang ditampilin ke user digenericin (gak bocorin detail server)
    ========================================= */
@@ -14,30 +14,77 @@
   let isProcessing = false;
   let progressInterval = null;
   let sliderInited = false;
-  let turnstileToken = null;
   let featureEnabled = true; // default nyala, dicek ulang ke Firestore pas init
+
+  let captchaChallenge = null;   // { salt, timestamp, difficulty, signature }
+  let captchaSolution = null;    // nonce hasil hitungan
+  let captchaBusy = false;
 
   function $(id) { return document.getElementById(id); }
 
-  /* --- captcha callbacks (dipanggil sama widget Turnstile) --- */
-  function onHdTurnstileSuccess(token) {
-    turnstileToken = token;
+  /* --- util hash, sama persis kayak yang dipake worker biar hasilnya nyambung --- */
+  async function sha256Hex(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function setCaptchaVisual(state) {
+    // state: "idle" | "verifying" | "verified" | "error"
+    const box = $("hdCaptchaBox");
+    const label = $("hdCaptchaLabel");
+    if (!box || !label) return;
+    box.classList.remove("is-verifying", "is-verified", "is-error");
+    if (state === "verifying") { box.classList.add("is-verifying"); label.textContent = "Memverifikasi..."; }
+    else if (state === "verified") { box.classList.add("is-verified"); label.textContent = "Berhasil!"; }
+    else if (state === "error") { box.classList.add("is-error"); label.textContent = "Gagal, klik buat coba lagi"; }
+    else { label.textContent = "Klik buat verifikasi"; }
+  }
+
+  function resetCaptcha() {
+    captchaChallenge = null;
+    captchaSolution = null;
+    captchaBusy = false;
+    setCaptchaVisual("idle");
     updateGenerateBtnState();
   }
-  function onHdTurnstileExpired() {
-    turnstileToken = null;
-    updateGenerateBtnState();
-  }
-  function resetTurnstile() {
-    turnstileToken = null;
-    try { window.turnstile?.reset("#hdTurnstile"); } catch (_) {}
-    updateGenerateBtnState();
+
+  async function startHdCaptcha() {
+    if (captchaBusy || captchaSolution) return; // udah verified atau lagi proses, gak usah diulang
+    captchaBusy = true;
+    setCaptchaVisual("verifying");
+    try {
+      const res = await fetch(`${WORKER_URL}?action=captcha-challenge`, { signal: AbortSignal.timeout(15000) });
+      const challenge = await res.json();
+      if (!res.ok || !challenge?.salt) throw new Error("Gagal ambil soal captcha");
+      captchaChallenge = challenge;
+
+      // Cari nonce lewat brute-force ringan (proof-of-work).
+      // Di-yield tiap 500 percobaan biar UI/browser gak nge-freeze.
+      const prefix = "0".repeat(challenge.difficulty || 4);
+      let nonce = 0;
+      while (true) {
+        const hash = await sha256Hex(`${challenge.salt}:${nonce}`);
+        if (hash.startsWith(prefix)) break;
+        nonce++;
+        if (nonce % 500 === 0) await new Promise(r => setTimeout(r, 0));
+        if (nonce > 2_000_000) throw new Error("Captcha kelamaan, coba lagi");
+      }
+      captchaSolution = nonce;
+      setCaptchaVisual("verified");
+    } catch (e) {
+      captchaChallenge = null;
+      captchaSolution = null;
+      setCaptchaVisual("error");
+    } finally {
+      captchaBusy = false;
+      updateGenerateBtnState();
+    }
   }
 
   function updateGenerateBtnState() {
     const btn = $("hdGenerateBtn");
     if (!btn) return;
-    btn.disabled = isProcessing || !turnstileToken;
+    btn.disabled = isProcessing || !captchaSolution;
   }
 
   /* --- gate: cek login (wajib Google) + cek maintenance flag --- */
@@ -86,7 +133,7 @@
       $("hdResult").style.display = "none";
       $("hdError").textContent = "";
       sliderInited = false;
-      resetTurnstile();
+      resetCaptcha();
     };
     reader.readAsDataURL(file);
   }
@@ -180,7 +227,7 @@
     if (!featureEnabled) { await refreshGate(); return; }
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
     if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
-    if (!turnstileToken) { $("hdError").textContent = "Selesaikan verifikasi captcha dulu."; return; }
+    if (!captchaSolution || !captchaChallenge) { $("hdError").textContent = "Selesaikan verifikasi captcha dulu."; return; }
 
     if (!WORKER_URL) {
       $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
@@ -206,7 +253,10 @@
       const form = new FormData();
       form.append("image", selectedFile, selectedFile.name || "image.jpg");
       form.append("filename", selectedFile.name || "image.jpg");
-      form.append("cf-turnstile-response", turnstileToken);
+      form.append("captchaSalt", captchaChallenge.salt);
+      form.append("captchaTimestamp", String(captchaChallenge.timestamp));
+      form.append("captchaSignature", captchaChallenge.signature);
+      form.append("captchaNonce", String(captchaSolution));
       setTimeout(() => progress.phase2(), 2000);
 
       const res = await fetch(WORKER_URL, {
@@ -250,7 +300,7 @@
       $("hdError").style.color = "";
     } finally {
       isProcessing = false;
-      resetTurnstile(); // captcha sekali pakai, wajib solve ulang tiap generate
+      resetCaptcha(); // captcha sekali pakai, wajib solve ulang tiap generate
     }
   }
 
@@ -264,7 +314,7 @@
     const l = $("hdLoading"); if (l) l.style.display = "none";
     const e = $("hdError"); if (e) { e.textContent = ""; e.style.color = ""; }
     const f = $("hdFileInput"); if (f) f.value = "";
-    resetTurnstile();
+    resetCaptcha();
   }
 
   /* --- init --- */
@@ -283,5 +333,5 @@
     }, 150);
   });
 
-  Object.assign(window, { runHdUpscale, hdReset, onHdTurnstileSuccess, onHdTurnstileExpired });
+  Object.assign(window, { runHdUpscale, hdReset, startHdCaptcha });
 })();
