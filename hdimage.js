@@ -177,19 +177,32 @@
         method: "POST", body: form,
         signal: AbortSignal.timeout(120000)
       });
-      const data = await res.json();
-      if (!data?.ok || !data?.result) throw new Error(data?.error || `Gagal memproses. Coba lagi.`);
+
+      const contentType = res.headers.get("content-type") || "";
+      let resultUrl;
+      if (contentType.startsWith("image/")) {
+        // Sukses: worker balikin bytes gambar langsung
+        const blob = await res.blob();
+        resultUrl = URL.createObjectURL(blob);
+      } else {
+        // Gagal: worker balikin JSON error
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Gagal memproses. Coba lagi.`);
+      }
 
       progress.done();
       await window.hdIncrementUsage?.();
 
       const downloadBtn = $("hdDownloadBtn");
       const resultBox = $("hdResult");
-      if (downloadBtn) downloadBtn.href = data.result;
+      if (downloadBtn) {
+        downloadBtn.href = resultUrl;
+        downloadBtn.download = "hd-" + (selectedFile.name || "image.jpg");
+      }
       if (resultBox) resultBox.style.display = "flex";
 
       // FIX 2: SATU panggilan initSlider aja
-      initSlider(selectedDataURL, data.result);
+      initSlider(selectedDataURL, resultUrl);
 
       const remaining = DAILY_LIMIT - usedCount - 1;
       $("hdError").style.color = remaining <= 1 ? "#f59e0b" : "#22c55e";
