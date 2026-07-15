@@ -26,17 +26,17 @@ function showMikiDebugBanner(msg){
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Testi Order - Miki Universe</title>
+<title>TikTok Downloader - Miki Universe</title>
 <link rel="icon" href="assets/miki-universe-logo.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body
-  data-title-id="Testi Order"
-  data-title-en="Order Testimonials"
-  data-title-ms="Testi Order"
-  data-desc-id="Kumpulan bukti order dari customer Miki Universe."
-  data-desc-en="A collection of customer order proof from Miki Universe."
-  data-desc-ms="Kumpulan bukti order daripada customer Miki Universe."
+  data-title-id="TikTok Downloader"
+  data-title-en="TikTok Downloader"
+  data-title-ms="TikTok Downloader"
+  data-desc-id="Download video TikTok tanpa watermark, HD, atau audio MP3, gratis."
+  data-desc-en="Download TikTok videos without watermark, in HD, or as MP3 audio, for free."
+  data-desc-ms="Muat turun video TikTok tanpa watermark, HD, atau audio MP3, percuma."
 >
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
 <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="4.2" ry="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/></symbol>
@@ -117,7 +117,7 @@ function showMikiDebugBanner(msg){
   <div class="popup-box auth-box">
     <button class="popup-close" onclick="closeAuthModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
     <h2>Masuk ke Miki Universe</h2>
-    <p>Pilih cara masuk Login buat akses semua fitur.</p>
+    <p>Pilih cara masuk buat akses profil & fitur lu.</p>
 
     <div class="auth-buttons-new">
       <button class="auth-google-new" type="button" onclick="loginGoogle()">
@@ -247,117 +247,189 @@ function showMikiDebugBanner(msg){
 
 
 <section class="hero page-hero testi-hero-clean">
-  <h1 data-page-title>Testi Order</h1>
-  <p data-page-desc>Kumpulan bukti order dari customer Miki Universe</p>
+  <h1 data-page-title>TikTok Downloader</h1>
+  <p data-page-desc>Download video TikTok tanpa watermark, HD, atau audio MP3, gratis.</p>
 </section>
 
-<section id="testi-list" class="single-testi-section">
-  <div class="single-testi-grid">
+<section class="hdpage-section" style="padding-top:8px">
+  <div class="tt-card">
+    <div class="auth-field">
+      <label>Link Video TikTok</label>
+      <input type="text" id="ttUrlInput" placeholder="Tempel link TikTok di sini...">
+    </div>
+    <button class="btn hdpage-server-btn" type="button" id="ttProsesBtn" onclick="runTiktokProcess()">
+      <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Proses
+    </button>
+    <p class="auth-error" id="ttError"></p>
 
-    <article class="single-testi-card">
-      <div class="single-testi-media">
-        <img src="assets/testi-edit.jpg" alt="Testi Order Edit">
-      </div>
-      <div class="single-testi-content">
-        <div class="single-testi-top">
-          <span class="single-testi-type">VIDEO EDIT</span>
-          <span class="success-badge"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg> Successfull</span>
-        </div>
-        <h2>Testi Order Edit</h2>
-        <p>Customer order edit video/gameplay. Nama dan nomor disensor, karena privasi.</p>
-        <div class="single-testi-meta">
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg> Customer 01</span>
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg> 0851 •••• ••21</span>
-        </div>
-      </div>
-    </article>
+    <div class="tt-loading" id="ttLoading" style="display:none">
+      <div class="tt-spinner"></div>
+      <span>Memproses link...</span>
+    </div>
 
-    <article class="single-testi-card">
-      <div class="single-testi-media">
-        <img src="assets/testi-cc.jpg" alt="Testi Order CC">
-      </div>
-      <div class="single-testi-content">
-        <div class="single-testi-top">
-          <span class="single-testi-type">CC GAMEPLAY</span>
-          <span class="success-badge"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg> Successfull</span>
-        </div>
-        <h2>Testi Order CC</h2>
-        <p>Bukti customer order Color Correction gameplay. Biar HD.</p>
-        <div class="single-testi-meta">
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg> Customer 02</span>
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg> 0896 •••• ••77</span>
+    <div class="tt-result" id="ttResult" style="display:none">
+      <div class="tt-result-preview">
+        <img id="ttCover" src="" alt="Cover video" onerror="this.style.display='none'">
+        <div class="tt-result-meta">
+          <h3 id="ttTitle">-</h3>
+          <span id="ttAuthor"></span>
         </div>
       </div>
-    </article>
 
-    <article class="single-testi-card">
-      <div class="single-testi-media">
-        <img src="assets/testi-alight.jpg" alt="Testi Order Account Alight Motion">
-      </div>
-      <div class="single-testi-content">
-        <div class="single-testi-top">
-          <span class="single-testi-type">ALIGHT MOTION</span>
-          <span class="success-badge"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg> Successfull</span>
-        </div>
-        <h2>Testi Order Account Alight Motion</h2>
-        <p>Bukti order akun Alight Motion.</p>
-        <div class="single-testi-meta">
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg> Customer 03</span>
-          <span><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg> 0812 •••• ••09</span>
-        </div>
-      </div>
-    </article>
+      <div class="tt-download-list">
+        <button class="tt-download-btn" type="button" onclick="downloadTiktok('normal')">
+          <span class="tt-download-icon"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
+          <span class="tt-download-label">
+            <b>No Watermark</b>
+            <small>Kualitas biasa, langsung download</small>
+          </span>
+          <svg class="icon tt-download-arrow" aria-hidden="true"><use href="#icon-bolt"></use></svg>
+        </button>
 
+        <button class="tt-download-btn tt-download-btn-hd" type="button" onclick="openAdGate()">
+          <span class="tt-download-icon"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></span>
+          <span class="tt-download-label">
+            <b>No Watermark — Full HD</b>
+            <small>Kualitas ukuran asli, nonton iklan dulu ±30 detik</small>
+          </span>
+          <svg class="icon tt-download-arrow" aria-hidden="true"><use href="#icon-bolt"></use></svg>
+        </button>
+
+        <button class="tt-download-btn" type="button" onclick="downloadTiktok('audio')">
+          <span class="tt-download-icon"><svg class="icon" aria-hidden="true"><use href="#icon-comment"></use></svg></span>
+          <span class="tt-download-label">
+            <b>Audio / MP3</b>
+            <small>Cuma suaranya aja</small>
+          </span>
+          <svg class="icon tt-download-arrow" aria-hidden="true"><use href="#icon-bolt"></use></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </section>
 
-<footer>© 2026 Miki Edit</footer>
+<!-- MODAL IKLAN — wajib ditonton/tunggu sebelum download HD kebuka -->
+<div class="popup-overlay" id="ttAdModal">
+  <div class="popup-box tt-ad-box">
+    <h2>Download HD</h2>
+    <p>Tunggu iklan di bawah selesai buat unlock download kualitas HD/original.</p>
 
-<!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <a href="/#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
-  <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
-  <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
-  <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
-    <button class="nav-item nav-button" type="button" onclick="openMorePopup()">
-    <svg class="icon" aria-hidden="true"><use href="#icon-ellipsis"></use></svg><span data-i18n="navMore">More</span>
-  </button>
+    <!-- ============================================================
+         SLOT IKLAN — tempel script/embed code dari ad network lu di sini
+         (Adsterra "Direct Link"/"Social Bar", Monetag, PropellerAds, dll).
+         Sekarang masih placeholder, timer tetep jalan independen dari ini.
+         ============================================================ -->
+    <div class="tt-ad-slot" id="ttAdSlot">
+      <div class="tt-ad-placeholder">
+        <svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg>
+        <span>Slot Iklan</span>
+        <small>(pasang script ad network lu di sini)</small>
+      </div>
+    </div>
+
+    <div class="tt-ad-timer">
+      <div class="tt-ad-timer-ring">
+        <svg viewBox="0 0 44 44"><circle id="ttAdRingBg" cx="22" cy="22" r="19"></circle><circle id="ttAdRingFg" cx="22" cy="22" r="19"></circle></svg>
+        <span id="ttAdCountdown">30</span>
+      </div>
+      <p id="ttAdStatusText">Mohon tunggu...</p>
+    </div>
+
+    <button class="btn hdpage-server-btn" type="button" id="ttAdUnlockBtn" onclick="confirmAdAndDownload()" disabled>
+      Download Sekarang
+    </button>
+    <button class="tt-ad-cancel" type="button" onclick="closeAdGate()">Batal</button>
+  </div>
 </div>
 
+<style>
+  .tt-card{
+    max-width:460px; margin:0 auto;
+    padding:26px 22px; border-radius:18px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);
+    backdrop-filter:blur(14px);
+  }
+  .tt-card .auth-field{ margin-bottom:18px; }
+  .tt-card .auth-field label{ display:block; margin-bottom:8px; font-size:.92em; opacity:.85; }
+  .tt-card .auth-field input{ width:100%; box-sizing:border-box; padding:13px 14px; font-size:1em; }
+  #ttProsesBtn{ width:100%; justify-content:center; }
+  #ttError{ margin-top:12px; }
 
-<!-- MORE POPUP -->
-<div class="popup-overlay" id="morePopup">
-  <div class="popup-box">
-    <button class="popup-close" onclick="closeMorePopup()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
-    <h2><span data-i18n="moreTitle">More Menu</span></h2>
-    <p><span data-i18n="moreDesc">Pilih Testi/HD Image.</span></p>
-    <div class="clean-more-list">
-      <a class="clean-more-card" href="/testi">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
-        <div>
-          <h3>Testi Order</h3>
-          <span>Lihat semua bukti order.</span>
-        </div>
-      </a>
-      <a class="clean-more-card" href="/preset">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
-        <div>
-          <h3>Preset & Konten</h3>
-          <span>Preset, link CR, dan konten dari Miki.</span>
-        </div>
-      </a>
-      <a class="clean-more-card" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank">
-        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg></span>
-        <div>
-          <h3>Order Cepat</h3>
-          <span>Langsung chat admin via WhatsApp.</span>
-        </div>
+  .tt-loading{
+    display:flex; align-items:center; gap:10px; justify-content:center;
+    margin-top:18px; font-size:.9em; opacity:.8;
+  }
+  .tt-spinner{
+    width:18px; height:18px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.2); border-top-color:#ec4899;
+    animation:ttSpin .7s linear infinite;
+  }
+  @keyframes ttSpin{ to{ transform:rotate(360deg); } }
+
+  .tt-result{ margin-top:22px; }
+  .tt-result-preview{
+    display:flex; gap:12px; align-items:center; margin-bottom:18px;
+    padding:12px; border-radius:12px; background:rgba(255,255,255,.03);
+  }
+  .tt-result-preview img{ width:56px; height:56px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  .tt-result-meta h3{ font-size:.95em; line-height:1.4; margin-bottom:4px; }
+  .tt-result-meta span{ font-size:.82em; opacity:.6; }
+
+  .tt-download-list{ display:flex; flex-direction:column; gap:10px; }
+  .tt-download-btn{
+    display:flex; align-items:center; gap:12px; width:100%;
+    padding:14px; border-radius:14px; cursor:pointer; text-align:left;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    color:inherit; font-family:inherit; transition:border-color .2s ease, background .2s ease;
+  }
+  .tt-download-btn:hover{ border-color:rgba(236,72,153,.5); background:rgba(236,72,153,.06); }
+  .tt-download-btn-hd{ border-color:rgba(250,204,21,.35); background:rgba(250,204,21,.06); }
+  .tt-download-icon{
+    width:38px; height:38px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, rgba(236,72,153,.25), rgba(139,92,246,.2));
+  }
+  .tt-download-icon .icon{ width:18px; height:18px; }
+  .tt-download-label{ flex:1; display:flex; flex-direction:column; gap:2px; }
+  .tt-download-label b{ font-size:.92em; }
+  .tt-download-label small{ font-size:.78em; opacity:.6; }
+  .tt-download-arrow{ width:16px; height:16px; opacity:.4; flex-shrink:0; }
+
+  .tt-ad-box{ max-width:380px; text-align:center; }
+  .tt-ad-slot{ margin:16px 0; border-radius:12px; overflow:hidden; }
+  .tt-ad-placeholder{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:36px 16px; border-radius:12px; border:1.5px dashed rgba(255,255,255,.18);
+    background:rgba(255,255,255,.03); opacity:.6;
+  }
+  .tt-ad-placeholder .icon{ width:26px; height:26px; margin-bottom:4px; }
+  .tt-ad-placeholder small{ font-size:.78em; }
+
+  .tt-ad-timer{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:10px 0 18px; }
+  .tt-ad-timer-ring{ position:relative; width:70px; height:70px; }
+  .tt-ad-timer-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .tt-ad-timer-ring circle{ fill:none; stroke-width:3; }
+  #ttAdRingBg{ stroke:rgba(255,255,255,.12); }
+  #ttAdRingFg{ stroke:#ec4899; stroke-linecap:round; stroke-dasharray:119.4; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  .tt-ad-timer-ring span{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:1.1em; font-weight:600;
+  }
+  #ttAdStatusText{ font-size:.85em; opacity:.7; }
+  #ttAdUnlockBtn{ width:100%; justify-content:center; }
+  .tt-ad-cancel{
+    display:block; width:100%; margin-top:10px; padding:10px; background:none; border:none;
+    color:inherit; opacity:.55; font-size:.85em; cursor:pointer;
+  }
+</style>
+
       </a>
       <a class="clean-more-card" href="/hdimage">
         <span class="icon-box" style="background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(99,102,241,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
         <div>
           <h3>HD Image</h3>
-          <span>Perjelas foto pakai AI.</span>
+          <span>Perjelas foto pakai AI — gratis, 3 server.</span>
         </div>
       </a>
       <a class="clean-more-card" href="/cekid">
@@ -410,6 +482,7 @@ function showMikiDebugBanner(msg){
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="tiktok.js"></script>
 <script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
 </body>
 </html>

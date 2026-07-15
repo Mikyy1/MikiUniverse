@@ -4,13 +4,15 @@
     { "source": "/testi.html", "destination": "/testi", "permanent": true },
     { "source": "/preset.html", "destination": "/preset", "permanent": true },
     { "source": "/hdimage.html", "destination": "/hdimage", "permanent": true },
-    { "source": "/cekid.html", "destination": "/cekid", "permanent": true }
+    { "source": "/cekid.html", "destination": "/cekid", "permanent": true },
+    { "source": "/tiktok.html", "destination": "/tiktok", "permanent": true }
   ],
   "rewrites": [
     { "source": "/home", "destination": "/index.html" },
     { "source": "/testi", "destination": "/testi.html" },
     { "source": "/preset", "destination": "/preset.html" },
     { "source": "/hdimage", "destination": "/hdimage.html" },
-    { "source": "/cekid", "destination": "/cekid.html" }
+    { "source": "/cekid", "destination": "/cekid.html" },
+    { "source": "/tiktok", "destination": "/tiktok.html" }
   ]
 }
