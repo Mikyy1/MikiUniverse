@@ -251,7 +251,7 @@ function showMikiDebugBanner(msg){
   <p data-page-desc>Cek nickname akun Mobile Legends pakai User ID & Server ID, gratis.</p>
 </section>
 
-<section class="hdpage-section">
+<section class="hdpage-section" style="padding-top:8px">
   <div class="cekid-card">
     <div class="auth-field">
       <label>User ID</label>
@@ -290,15 +290,25 @@ function showMikiDebugBanner(msg){
   <style>
     .cekid-card{
       max-width:420px; margin:0 auto;
-      padding:22px; border-radius:18px;
+      padding:26px 22px; border-radius:18px;
       background:rgba(255,255,255,.04);
       border:1px solid rgba(255,255,255,.1);
       backdrop-filter:blur(14px);
     }
-    .cekid-hint{ font-size:.82em; opacity:.65; margin:-6px 0 16px; line-height:1.5; }
+    .cekid-card .auth-field{ margin-bottom:20px; }
+    .cekid-card .auth-field label{ display:block; margin-bottom:8px; font-size:.92em; opacity:.85; }
+    .cekid-card .auth-field input{
+      width:100%; box-sizing:border-box; padding:13px 14px; font-size:1em;
+    }
+    .cekid-hint{
+      font-size:.82em; opacity:.6; line-height:1.6;
+      margin:2px 0 22px;
+    }
+    .cekid-card #cekidBtn{ width:100%; justify-content:center; }
+    .cekid-card #cekidError{ margin-top:12px; }
     .cekid-loading{
       display:flex; align-items:center; gap:10px; justify-content:center;
-      margin-top:16px; font-size:.9em; opacity:.8;
+      margin-top:18px; font-size:.9em; opacity:.8;
     }
     .cekid-spinner{
       width:18px; height:18px; border-radius:50%;
@@ -307,21 +317,21 @@ function showMikiDebugBanner(msg){
     }
     @keyframes cekidSpin{ to{ transform:rotate(360deg); } }
     .cekid-result{
-      margin-top:18px; padding:18px; border-radius:14px; text-align:center;
+      margin-top:22px; padding:20px 18px; border-radius:14px; text-align:center;
       background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(236,72,153,.08));
       border:1px solid rgba(192,132,252,.35);
     }
     .cekid-result-icon{
-      width:42px; height:42px; margin:0 auto 10px; border-radius:50%;
+      width:42px; height:42px; margin:0 auto 12px; border-radius:50%;
       background:linear-gradient(135deg,#4ade80,#22c55e);
       display:flex; align-items:center; justify-content:center;
     }
     .cekid-result-icon .icon{ width:22px; height:22px; color:#fff; }
-    .cekid-result h3{ font-size:1.25em; margin-bottom:14px; word-break:break-word; }
-    .cekid-result-rows{ display:flex; flex-direction:column; gap:8px; text-align:left; }
+    .cekid-result h3{ font-size:1.25em; margin-bottom:16px; word-break:break-word; line-height:1.4; }
+    .cekid-result-rows{ display:flex; flex-direction:column; gap:10px; text-align:left; }
     .cekid-result-row{
-      display:flex; justify-content:space-between; font-size:.9em;
-      padding:8px 12px; border-radius:9px; background:rgba(255,255,255,.04);
+      display:flex; justify-content:space-between; align-items:center; font-size:.9em;
+      padding:10px 14px; border-radius:9px; background:rgba(255,255,255,.04);
     }
     .cekid-result-row span{ opacity:.65; }
   </style>
