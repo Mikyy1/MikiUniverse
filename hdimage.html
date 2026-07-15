@@ -232,6 +232,14 @@ function showMikiDebugBanner(msg){
         <button class="btn admin-premium-btn" type="button" id="adminPremiumBtn" onclick="adminTogglePremium()">Aktifkan Premium</button>
       </div>
     </div>
+
+    <hr style="border-color:rgba(255,255,255,.1); margin:18px 0">
+    <h3 style="margin-bottom:8px">Fitur HD Image</h3>
+    <p style="margin-bottom:10px; opacity:.75; font-size:.9em">Matiin kalau lagi maintenance/update — user bakal liat halaman "Sedang Maintenance".</p>
+    <div class="admin-role-row">
+      <span id="adminHdFeatureStatus">Fitur HD Image: -</span>
+      <button class="btn admin-role-btn" type="button" id="adminHdFeatureBtn" onclick="adminToggleHdFeature()">-</button>
+    </div>
   </div>
 </div>
 
@@ -261,6 +269,16 @@ function showMikiDebugBanner(msg){
     </div>
   </div>
 
+  <!-- MAINTENANCE GATE (muncul kalau admin matiin fitur HD Image) -->
+  <div id="hdMaintenanceGate" class="hdpage-gate-locked" style="display:none">
+    <div class="hdpage-gate-blur-bg">
+      <svg class="icon hdpage-lock-icon" aria-hidden="true"><use href="#icon-tools"></use></svg>
+      <h3>Sedang Maintenance</h3>
+      <p>Fitur HD Image lagi diupdate/diperbaiki sama admin.</p>
+      <p class="hdpage-gate-sub">Coba lagi beberapa saat lagi ya.</p>
+    </div>
+  </div>
+
   <!-- MAIN TOOL -->
   <div id="hdMain" style="display:none">
     <div class="hdpage-upload-area" id="hdUploadArea" onclick="document.getElementById('hdFileInput').click()">
@@ -273,7 +291,14 @@ function showMikiDebugBanner(msg){
     <input type="file" id="hdFileInput" accept="image/*" style="display:none">
 
     <div class="hdpage-servers" id="hdServers" style="display:none">
-      <button class="btn hdpage-server-btn" type="button" id="hdGenerateBtn" onclick="runHdUpscale()">
+      <div id="hdTurnstileWrap" style="display:flex;justify-content:center;margin-bottom:14px">
+        <div id="hdTurnstile" class="cf-turnstile"
+             data-sitekey="0x4AAAAAAD2gebeMs9vFT1SW"
+             data-callback="onHdTurnstileSuccess"
+             data-expired-callback="onHdTurnstileExpired"
+             data-error-callback="onHdTurnstileExpired"></div>
+      </div>
+      <button class="btn hdpage-server-btn" type="button" id="hdGenerateBtn" onclick="runHdUpscale()" disabled>
         <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Generate
       </button>
     </div>
@@ -397,6 +422,7 @@ function showMikiDebugBanner(msg){
   </a>
 </div>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>

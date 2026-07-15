@@ -457,6 +457,46 @@ async function hdIncrementUsage() {
   } catch (_) {}
 }
 
+/* ---------- HD Image maintenance toggle (settings/features di Firestore) ---------- */
+async function hdCheckFeatureEnabled() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "features"));
+    const data = snap.data();
+    // Kalau dokumennya belum pernah dibikin, defaultnya NYALA.
+    if (!data || typeof data.hdImageEnabled === "undefined") return true;
+    return !!data.hdImageEnabled;
+  } catch (_) {
+    return true; // fail open — kalau Firestore lagi kenapa-kenapa, jangan sampe nge-block user
+  }
+}
+
+async function adminLoadHdFeatureStatus() {
+  const label = $("adminHdFeatureStatus");
+  const btn = $("adminHdFeatureBtn");
+  if (!label || !btn) return;
+  const enabled = await hdCheckFeatureEnabled();
+  label.textContent = "Fitur HD Image: " + (enabled ? "Aktif" : "Maintenance");
+  btn.textContent = enabled ? "Matiin (Maintenance)" : "Nyalain Lagi";
+}
+
+async function adminToggleHdFeature() {
+  const label = $("adminHdFeatureStatus");
+  const btn = $("adminHdFeatureBtn");
+  if (!label || !btn) return;
+  const turningOff = btn.textContent === "Matiin (Maintenance)";
+  try {
+    await setDoc(doc(db, "settings", "features"), {
+      hdImageEnabled: !turningOff,
+      updatedAt: serverTimestamp(),
+      updatedBy: window.__mikiAuthState?.currentUser?.email || null
+    }, { merge: true });
+    label.textContent = "Fitur HD Image: " + (turningOff ? "Maintenance" : "Aktif");
+    btn.textContent = turningOff ? "Nyalain Lagi" : "Matiin (Maintenance)";
+  } catch (e) {
+    alert("Gagal ubah status fitur HD Image. Cek Firestore Rules lu (butuh akses tulis ke settings/features).");
+  }
+}
+
 /* ---------- avatar upload + save profile ---------- */
 async function onAvatarFileChange(event) {
   const file = event.target.files?.[0];
@@ -583,10 +623,11 @@ Object.assign(window, {
   loginGoogle, loginGuest,
   onAvatarFileChange, saveProfile,
   adminSearchUser, adminSaveTitle, adminToggleRole, adminTogglePremium,
+  adminLoadHdFeatureStatus, adminToggleHdFeature,
   logoutUser,
   onPresetPhotoChange, submitPresetPost, deletePresetPost,
   togglePresetEdit, savePresetEdit,
-  hdCheckUsage, hdIncrementUsage
+  hdCheckUsage, hdIncrementUsage, hdCheckFeatureEnabled
 });
 
 console.log("[Miki Auth] Firebase siap & nyambung.");

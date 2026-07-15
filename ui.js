@@ -46,6 +46,7 @@ function openAdminPanel() {
   $("adminResultBox").style.display = "none";
   $("adminSearchError").textContent = "";
   openModal("adminModal");
+  window.adminLoadHdFeatureStatus?.();
 }
 function closeAdminModal() { closeModal("adminModal"); }
 
@@ -87,7 +88,7 @@ const MIKI_FIREBASE_NOT_READY = "Sistem login gagal dimuat. Coba refresh halaman
 [
   "loginGoogle", "loginGuest",
   "onAvatarFileChange", "saveProfile", "adminSearchUser", "adminSaveTitle",
-  "adminToggleRole", "adminTogglePremium", "logoutUser",
+  "adminToggleRole", "adminTogglePremium", "adminToggleHdFeature", "logoutUser",
   "onPresetPhotoChange", "submitPresetPost", "deletePresetPost",
   "togglePresetEdit", "savePresetEdit"
 ].forEach(name => {

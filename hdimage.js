@@ -1,6 +1,8 @@
 /* =========================================
    MIKI UNIVERSE — HD Image Page
-   Fixed: before/after direction, slider double-init, guest gate
+   + Turnstile captcha wajib
+   + Cek maintenance flag dari admin panel
+   + Error yang ditampilin ke user digenericin (gak bocorin detail server)
    ========================================= */
 
 (function () {
@@ -12,16 +14,52 @@
   let isProcessing = false;
   let progressInterval = null;
   let sliderInited = false;
+  let turnstileToken = null;
+  let featureEnabled = true; // default nyala, dicek ulang ke Firestore pas init
 
   function $(id) { return document.getElementById(id); }
 
-  /* --- gate: cek login (wajib Google, bukan tamu) --- */
-  function refreshGate() {
+  /* --- captcha callbacks (dipanggil sama widget Turnstile) --- */
+  function onHdTurnstileSuccess(token) {
+    turnstileToken = token;
+    updateGenerateBtnState();
+  }
+  function onHdTurnstileExpired() {
+    turnstileToken = null;
+    updateGenerateBtnState();
+  }
+  function resetTurnstile() {
+    turnstileToken = null;
+    try { window.turnstile?.reset("#hdTurnstile"); } catch (_) {}
+    updateGenerateBtnState();
+  }
+
+  function updateGenerateBtnState() {
+    const btn = $("hdGenerateBtn");
+    if (!btn) return;
+    btn.disabled = isProcessing || !turnstileToken;
+  }
+
+  /* --- gate: cek login (wajib Google) + cek maintenance flag --- */
+  async function refreshGate() {
     const user = window.__mikiAuthState?.currentUser;
     const profile = window.__mikiAuthState?.currentProfile;
     const gate = $("hdLoginGate");
+    const maintGate = $("hdMaintenanceGate");
     const main = $("hdMain");
-    if (!gate || !main) return;
+    if (!gate || !main || !maintGate) return;
+
+    // Cek maintenance flag dulu (berlaku buat semua orang termasuk admin,
+    // biar admin juga bisa mastiin tampilan yang dilihat user awam)
+    featureEnabled = await window.hdCheckFeatureEnabled?.() ?? true;
+    if (!featureEnabled) {
+      gate.style.display = "none";
+      main.style.display = "none";
+      maintGate.style.display = "flex";
+      return;
+    }
+    maintGate.style.display = "none";
+
     // Hanya izinkan user Google (bukan anonymous/guest)
     const isGoogle = user && !user.isAnonymous && profile?.provider === "google";
     if (isGoogle) {
@@ -48,6 +86,7 @@
       $("hdResult").style.display = "none";
       $("hdError").textContent = "";
       sliderInited = false;
+      resetTurnstile();
     };
     reader.readAsDataURL(file);
   }
@@ -85,15 +124,7 @@
     };
   }
 
-  function setGenerateBtnDisabled(val) {
-    const btn = $("hdGenerateBtn");
-    if (btn) btn.disabled = val;
-  }
-
-  /* --- slider (dipanggil SEKALI setelah kedua gambar siap) ---
-     FIX 1: clip-path inset dari KIRI biar before=kiri, after=kanan (standar)
-     FIX 2: satu initSlider call doang, pakai flag sliderInited
-  */
+  /* --- slider (dipanggil SEKALI setelah kedua gambar siap) --- */
   function initSlider(beforeSrc, afterSrc) {
     if (sliderInited) return;
     const beforeImg = $("hdBeforeImg");
@@ -106,18 +137,15 @@
 
     beforeImg.src = beforeSrc;
 
-    // Tunggu afterImg loaded baru init, biar container punya tinggi
     function doInit() {
       sliderInited = true;
       range.value = 50;
 
-      // Remove existing listener dulu (bersih)
       const newRange = range.cloneNode(true);
       range.parentNode.replaceChild(newRange, range);
 
       function applySlider() {
         const v = newRange.value;
-        // FIX: inset dari kiri → before kiri, after kanan
         afterWrap.style.clipPath = `inset(0 0 0 ${v}%)`;
         handle.style.left = v + "%";
         if (divider) divider.style.left = v + "%";
@@ -136,16 +164,23 @@
       doInit();
     } else {
       afterImg.onload = doInit;
-      afterImg.onerror = doInit; // init anyway even on error
+      afterImg.onerror = doInit;
       afterImg.src = afterSrc;
     }
+  }
+
+  /* --- pesan error generic buat user, detail asli cuma dikonsol dev (bukan production) --- */
+  function genericErrorMessage() {
+    return "Gagal memproses gambar. Coba lagi beberapa saat.";
   }
 
   /* --- main --- */
   async function runHdUpscale() {
     if (isProcessing) return;
+    if (!featureEnabled) { await refreshGate(); return; }
     if (!selectedFile) { $("hdError").textContent = "Pilih foto dulu."; return; }
     if (!window.__mikiAuthState?.currentUser) { refreshGate(); return; }
+    if (!turnstileToken) { $("hdError").textContent = "Selesaikan verifikasi captcha dulu."; return; }
 
     if (!WORKER_URL) {
       $("hdError").textContent = "Worker belum dipasang. Hubungi admin.";
@@ -158,7 +193,7 @@
 
     isProcessing = true;
     sliderInited = false;
-    setGenerateBtnDisabled(true);
+    updateGenerateBtnState();
     $("hdError").textContent = "";
     $("hdResult").style.display = "none";
 
@@ -171,6 +206,7 @@
       const form = new FormData();
       form.append("image", selectedFile, selectedFile.name || "image.jpg");
       form.append("filename", selectedFile.name || "image.jpg");
+      form.append("cf-turnstile-response", turnstileToken);
       setTimeout(() => progress.phase2(), 2000);
 
       const res = await fetch(WORKER_URL, {
@@ -180,14 +216,14 @@
 
       const contentType = res.headers.get("content-type") || "";
       let resultUrl;
-      if (contentType.startsWith("image/")) {
+      if (res.ok && contentType.startsWith("image/")) {
         // Sukses: worker balikin bytes gambar langsung
         const blob = await res.blob();
         resultUrl = URL.createObjectURL(blob);
       } else {
-        // Gagal: worker balikin JSON error
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || `Gagal memproses. Coba lagi.`);
+        // Gagal — apapun detail errornya di server, ke user cuma pesan generic.
+        // Detail asli (nama API, status code, dll) sengaja gak diteruskan ke sini.
+        throw new Error(genericErrorMessage());
       }
 
       progress.done();
@@ -201,7 +237,6 @@
       }
       if (resultBox) resultBox.style.display = "flex";
 
-      // FIX 2: SATU panggilan initSlider aja
       initSlider(selectedDataURL, resultUrl);
 
       const remaining = DAILY_LIMIT - usedCount - 1;
@@ -211,13 +246,11 @@
 
     } catch (err) {
       progress.error();
-      $("hdError").textContent = err.name === "TimeoutError"
-        ? `Timeout. Coba lagi.`
-        : (err.message || `Error. Coba lagi.`);
+      $("hdError").textContent = err.name === "TimeoutError" ? "Timeout. Coba lagi." : genericErrorMessage();
       $("hdError").style.color = "";
     } finally {
       isProcessing = false;
-      setGenerateBtnDisabled(false);
+      resetTurnstile(); // captcha sekali pakai, wajib solve ulang tiap generate
     }
   }
 
@@ -231,6 +264,7 @@
     const l = $("hdLoading"); if (l) l.style.display = "none";
     const e = $("hdError"); if (e) { e.textContent = ""; e.style.color = ""; }
     const f = $("hdFileInput"); if (f) f.value = "";
+    resetTurnstile();
   }
 
   /* --- init --- */
@@ -238,11 +272,9 @@
     const fileInput = $("hdFileInput");
     if (fileInput) fileInput.addEventListener("change", onFileSelected);
 
-    // FIX 3: refreshGate dipanggil langsung + dari auth callback
     window.__mikiOnAuthChange = refreshGate;
     refreshGate();
 
-    // Polling buat kasus auth.js module load duluan
     const check = setInterval(() => {
       if (window.__mikiAuthState !== undefined) {
         refreshGate();
@@ -251,5 +283,5 @@
     }, 150);
   });
 
-  Object.assign(window, { runHdUpscale, hdReset });
+  Object.assign(window, { runHdUpscale, hdReset, onHdTurnstileSuccess, onHdTurnstileExpired });
 })();

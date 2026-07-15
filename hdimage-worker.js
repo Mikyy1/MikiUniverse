@@ -1,12 +1,19 @@
 /**
  * MIKI UNIVERSE — HD Image Proxy Worker
- * Coba beberapa image host secara berurutan kalau ada yang gagal.
+ * Upload gambar user -> coba beberapa API upscale berurutan (auto-fallback
+ * kalau salah satu gagal/di-block) -> stream hasilnya langsung sebagai
+ * bytes gambar (BUKAN base64, biar gak kena limit CPU time Workers).
  */
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
+};
+
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+  "Accept": "application/json, text/plain, */*"
 };
 
 function json(data, status = 200) {
@@ -16,7 +23,41 @@ function json(data, status = 200) {
   });
 }
 
-/* --- Upload ke beberapa host, pakai yang pertama berhasil --- */
+async function safeJson(res) {
+  const raw = await res.text();
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    throw new Error(`respons bukan JSON (status ${res.status}, kemungkinan di-block)`);
+  }
+}
+
+/* --- Verifikasi captcha Turnstile ke Cloudflare (server-side, gak bisa dipalsuin dari browser) --- */
+async function verifyTurnstile(token, secretKey, remoteIp) {
+  if (!secretKey) {
+    console.error("[HD Worker] TURNSTILE_SECRET_KEY belum diset di Worker Secrets.");
+    throw new Error("captcha belum dikonfigurasi di server");
+  }
+  if (!token) throw new Error("captcha kosong");
+
+  const form = new FormData();
+  form.append("secret", secretKey);
+  form.append("response", token);
+  if (remoteIp) form.append("remoteip", remoteIp);
+
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: form,
+    signal: AbortSignal.timeout(15000)
+  });
+  const data = await res.json().catch(() => null);
+  if (!data?.success) {
+    console.error("[HD Worker] Turnstile gagal:", JSON.stringify(data?.["error-codes"] || data));
+    throw new Error("captcha tidak valid");
+  }
+}
+
+/* --- Upload dulu ke host sementara, biar punya URL yang bisa dibaca API upscale --- */
 
 async function uploadTo0x0(imageBlob, filename) {
   const form = new FormData();
@@ -24,6 +65,7 @@ async function uploadTo0x0(imageBlob, filename) {
   const res = await fetch("https://0x0.st", {
     method: "POST",
     body: form,
+    headers: BROWSER_HEADERS,
     signal: AbortSignal.timeout(30000)
   });
   const text = (await res.text()).trim();
@@ -41,7 +83,6 @@ async function uploadToTmpfiles(imageBlob, filename) {
   });
   const data = await res.json();
   if (!data?.data?.url) throw new Error("tmpfiles gagal");
-  // tmpfiles balikin URL viewer, ubah jadi direct download
   return data.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
 }
 
@@ -80,62 +121,110 @@ async function uploadImage(imageBlob, filename) {
   throw new Error("Semua upload host gagal: " + errors.join(" | "));
 }
 
-/* --- Upscale servers --- */
+/* --- Server-server upscale, dicoba berurutan sampe ada yang berhasil --- */
 
-async function upscaleServer1(imageUrl) {
+async function upscaleFaa(imageUrl) {
+  const res = await fetch(
+    `https://api-faa.my.id/faa/hdv4?url=${encodeURIComponent(imageUrl)}`,
+    { signal: AbortSignal.timeout(90000), headers: BROWSER_HEADERS }
+  );
+  const data = await safeJson(res);
+  if (!data?.status || !data?.result?.image_upscaled) throw new Error("faa gagal: " + JSON.stringify(data).slice(0, 100));
+  return data.result.image_upscaled;
+}
+
+async function upscaleIkyyxd(imageUrl) {
   const res = await fetch(
     `https://api.ikyyxd.my.id/tools/upscale?url=${encodeURIComponent(imageUrl)}`,
-    { signal: AbortSignal.timeout(90000) }
+    { signal: AbortSignal.timeout(90000), headers: BROWSER_HEADERS }
   );
-  const data = await res.json();
-  if (!data?.status || !data?.result?.upscale) throw new Error("Server 1 gagal: " + JSON.stringify(data).slice(0, 100));
+  const data = await safeJson(res);
+  if (!data?.status || !data?.result?.upscale) throw new Error("ikyyxd gagal: " + JSON.stringify(data).slice(0, 100));
   return data.result.upscale;
 }
 
-async function upscaleServer2(imageUrl) {
+async function upscaleLexcode(imageUrl) {
   const res = await fetch(
     `https://api.lexcode.biz.id/api/tools/upscale?url=${encodeURIComponent(imageUrl)}`,
-    { signal: AbortSignal.timeout(90000) }
+    { signal: AbortSignal.timeout(90000), headers: BROWSER_HEADERS }
   );
-  const data = await res.json();
-  if (!data?.success || !data?.result) throw new Error("Server 2 gagal: " + JSON.stringify(data).slice(0, 100));
+  const data = await safeJson(res);
+  if (!data?.success || !data?.result) throw new Error("lexcode gagal: " + JSON.stringify(data).slice(0, 100));
   return data.result;
 }
 
-async function upscaleServer3(imageUrl) {
+async function upscaleZenzxz(imageUrl) {
   const resultUrl = `https://api.zenzxz.my.id/tools/upscale?url=${encodeURIComponent(imageUrl)}&scale=4`;
-  const check = await fetch(resultUrl, { signal: AbortSignal.timeout(90000) });
-  if (!check.ok) throw new Error(`Server 3 response ${check.status}`);
+  const check = await fetch(resultUrl, { signal: AbortSignal.timeout(90000), headers: BROWSER_HEADERS });
+  if (!check.ok) throw new Error(`zenzxz response ${check.status}`);
   return resultUrl;
 }
 
+async function upscaleImage(imageUrl) {
+  const servers = [
+    { name: "faa", fn: () => upscaleFaa(imageUrl) },
+    { name: "ikyyxd", fn: () => upscaleIkyyxd(imageUrl) },
+    { name: "lexcode", fn: () => upscaleLexcode(imageUrl) },
+    { name: "zenzxz", fn: () => upscaleZenzxz(imageUrl) }
+  ];
+  const errors = [];
+  for (const server of servers) {
+    try {
+      const url = await server.fn();
+      console.log(`Upscale berhasil via ${server.name}: ${url}`);
+      return url;
+    } catch (e) {
+      errors.push(`${server.name}: ${e.message}`);
+      console.log(`${server.name} gagal: ${e.message}`);
+    }
+  }
+  throw new Error("Semua server upscale gagal: " + errors.join(" | "));
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
     if (request.method !== "POST") return json({ error: "Method tidak didukung." }, 405);
 
-    let server, imageBlob, filename;
+    let imageBlob, filename, turnstileToken;
     try {
       const formData = await request.formData();
-      server = parseInt(formData.get("server") || "1", 10);
       imageBlob = formData.get("image");
       filename = formData.get("filename") || "image.jpg";
-      if (!imageBlob) return json({ error: "Gambar tidak ada." }, 400);
-    } catch (_) {
-      return json({ error: "Request format salah." }, 400);
+      turnstileToken = formData.get("cf-turnstile-response");
+      if (!imageBlob) return json({ ok: false, error: "Gagal memproses gambar. Coba lagi." }, 400);
+    } catch (e) {
+      console.error("[HD Worker] Request format salah:", e.message);
+      return json({ ok: false, error: "Gagal memproses gambar. Coba lagi." }, 400);
+    }
+
+    // Wajib lolos captcha dulu sebelum ngapa-ngapain lagi
+    try {
+      await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get("CF-Connecting-IP"));
+    } catch (e) {
+      console.error("[HD Worker] Captcha ditolak:", e.message);
+      return json({ ok: false, error: "Verifikasi captcha gagal. Coba lagi." }, 403);
     }
 
     try {
       const imageUrl = await uploadImage(imageBlob, filename);
+      const upscaledUrl = await upscaleImage(imageUrl);
 
-      let resultUrl;
-      if (server === 1) resultUrl = await upscaleServer1(imageUrl);
-      else if (server === 2) resultUrl = await upscaleServer2(imageUrl);
-      else resultUrl = await upscaleServer3(imageUrl);
+      // Stream langsung bytes-nya, JANGAN diubah ke base64 manual —
+      // itu proses CPU-berat dan gampang kena limit CPU time di Workers.
+      const imgRes = await fetch(upscaledUrl, { signal: AbortSignal.timeout(60000), headers: BROWSER_HEADERS });
+      if (!imgRes.ok || !imgRes.body) throw new Error(`Gagal ambil hasil gambar (${imgRes.status})`);
 
-      return json({ ok: true, result: resultUrl });
+      const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+      return new Response(imgRes.body, {
+        status: 200,
+        headers: { "Content-Type": contentType, ...CORS_HEADERS }
+      });
     } catch (e) {
-      return json({ ok: false, error: e.message || "Terjadi kesalahan." }, 500);
+      // PENTING: detail asli (nama API pihak ketiga, URL, status code) cuma masuk log
+      // server (keliatan di Cloudflare dashboard > Logs), TIDAK PERNAH dikirim ke client.
+      console.error("[HD Worker] Proses gagal:", e.message);
+      return json({ ok: false, error: "Gagal memproses gambar. Coba lagi beberapa saat." }, 500);
     }
   }
 };
