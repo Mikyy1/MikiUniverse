@@ -59,52 +59,34 @@ async function fetchFromFaa(tiktokUrl) {
   const r = data?.result || data?.data || data;
   if (!r) throw new Error("faa: format respons gak dikenali");
 
-  const normal = r.no_watermark || r.nowm || r.video?.noWatermark || r.play || r.video_no_wm;
-  const hd = r.hd || r.hd_watermark || r.video?.hd || r.hdplay || r.video_hd;
+  const hd = r.hd || r.hd_watermark || r.video?.hd || r.hdplay || r.video_hd || r.no_watermark || r.nowm || r.video?.noWatermark || r.play || r.video_no_wm;
   const audio = r.audio || r.music || r.mp3 || r.video?.audio;
   const title = r.title || r.desc || r.caption || "TikTok Video";
   const cover = r.cover || r.thumbnail || r.video?.cover;
   const author = r.author?.nickname || r.author?.name || r.username || "";
 
-  if (!normal && !hd && !audio) throw new Error("faa: gak ada link video di respons");
+  if (!hd && !audio) throw new Error("faa: gak ada link video di respons");
 
-  return { title, cover, author, normal, hd: hd || normal, audio, source: "faa" };
+  return { title, cover, author, hd, audio, source: "faa" };
 }
 
 /* --- Sumber 2: tikwm.com (fallback, API publik yang formatnya stabil & terdokumentasi) --- */
 async function fetchFromTikwm(tiktokUrl) {
   const base = "https://www.tikwm.com";
-
-  // Request TANPA hd=1 -> ini yang dipake buat tier "biasa" (sengaja gak full quality,
-  // biar ada insentif orang nonton iklan buat dapetin versi HD-nya — kayak ssstik.io).
-  const resNormal = await fetch(
-    `${base}/api/?url=${encodeURIComponent(tiktokUrl)}`,
+  const res = await fetch(
+    `${base}/api/?url=${encodeURIComponent(tiktokUrl)}&hd=1`,
     { signal: AbortSignal.timeout(30000), headers: BROWSER_HEADERS }
   );
-  const dataNormal = await safeJson(resNormal);
-  if (dataNormal?.code !== 0 || !dataNormal?.data) throw new Error("tikwm: " + (dataNormal?.msg || "gagal ambil data"));
-  const dNormal = dataNormal.data;
-
-  // Request DENGAN hd=1 -> khusus buat tier HD/original, kualitas paling tinggi yang tikwm punya.
-  let dHd = dNormal;
-  try {
-    const resHd = await fetch(
-      `${base}/api/?url=${encodeURIComponent(tiktokUrl)}&hd=1`,
-      { signal: AbortSignal.timeout(30000), headers: BROWSER_HEADERS }
-    );
-    const dataHd = await safeJson(resHd);
-    if (dataHd?.code === 0 && dataHd?.data) dHd = dataHd.data;
-  } catch (_) {
-    // gagal ambil versi HD-nya doang gapapa, fallback tetep pake data yang normal
-  }
+  const data = await safeJson(res);
+  if (data?.code !== 0 || !data?.data) throw new Error("tikwm: " + (data?.msg || "gagal ambil data"));
+  const d = data.data;
 
   return {
-    title: dNormal.title || "TikTok Video",
-    cover: absUrl(base, dNormal.cover),
-    author: dNormal.author?.nickname || dNormal.author?.unique_id || "",
-    normal: absUrl(base, dNormal.play),
-    hd: absUrl(base, dHd.hdplay) || absUrl(base, dHd.play) || absUrl(base, dNormal.play),
-    audio: absUrl(base, dNormal.music),
+    title: d.title || "TikTok Video",
+    cover: absUrl(base, d.cover),
+    author: d.author?.nickname || d.author?.unique_id || "",
+    hd: absUrl(base, d.hdplay) || absUrl(base, d.play),
+    audio: absUrl(base, d.music),
     source: "tikwm"
   };
 }

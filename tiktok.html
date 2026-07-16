@@ -277,20 +277,11 @@ function showMikiDebugBanner(msg){
       </div>
 
       <div class="tt-download-list">
-        <button class="tt-download-btn" type="button" onclick="downloadTiktok('normal')">
-          <span class="tt-download-icon"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
-          <span class="tt-download-label">
-            <b>No Watermark</b>
-            <small>Kualitas SD, langsung download</small>
-          </span>
-          <svg class="icon tt-download-arrow" aria-hidden="true"><use href="#icon-bolt"></use></svg>
-        </button>
-
-        <button class="tt-download-btn tt-download-btn-hd" type="button" onclick="openAdGate()">
+        <button class="tt-download-btn tt-download-btn-hd" type="button" onclick="downloadTiktok('hd')">
           <span class="tt-download-icon"><svg class="icon" aria-hidden="true"><use href="#icon-star"></use></svg></span>
           <span class="tt-download-label">
-            <b>No Watermark — Full HD</b>
-            <small>Kualitas ukuran asli, nonton iklan dulu ±30 detik</small>
+            <b>No Watermark (HD)</b>
+            <small>Kualitas terbaik, langsung download</small>
           </span>
           <svg class="icon tt-download-arrow" aria-hidden="true"><use href="#icon-bolt"></use></svg>
         </button>
@@ -307,40 +298,6 @@ function showMikiDebugBanner(msg){
     </div>
   </div>
 </section>
-
-<!-- MODAL IKLAN — wajib ditonton/tunggu sebelum download HD kebuka -->
-<div class="popup-overlay" id="ttAdModal">
-  <div class="popup-box tt-ad-box">
-    <h2>Download HD</h2>
-    <p>Tunggu iklan di bawah selesai buat unlock download kualitas HD/original.</p>
-
-    <!-- ============================================================
-         SLOT IKLAN — tempel script/embed code dari ad network lu di sini
-         (Adsterra "Direct Link"/"Social Bar", Monetag, PropellerAds, dll).
-         Sekarang masih placeholder, timer tetep jalan independen dari ini.
-         ============================================================ -->
-    <div class="tt-ad-slot" id="ttAdSlot">
-      <div class="tt-ad-placeholder">
-        <svg class="icon" aria-hidden="true"><use href="#icon-bullhorn"></use></svg>
-        <span>Slot Iklan</span>
-        <small>(pasang script ad network lu di sini)</small>
-      </div>
-    </div>
-
-    <div class="tt-ad-timer">
-      <div class="tt-ad-timer-ring">
-        <svg viewBox="0 0 44 44"><circle id="ttAdRingBg" cx="22" cy="22" r="19"></circle><circle id="ttAdRingFg" cx="22" cy="22" r="19"></circle></svg>
-        <span id="ttAdCountdown">30</span>
-      </div>
-      <p id="ttAdStatusText">Mohon tunggu...</p>
-    </div>
-
-    <button class="btn hdpage-server-btn" type="button" id="ttAdUnlockBtn" onclick="confirmAdAndDownload()" disabled>
-      Download Sekarang
-    </button>
-    <button class="tt-ad-cancel" type="button" onclick="closeAdGate()">Batal</button>
-  </div>
-</div>
 
 <style>
   .tt-card{
@@ -395,33 +352,6 @@ function showMikiDebugBanner(msg){
   .tt-download-label b{ font-size:.92em; }
   .tt-download-label small{ font-size:.78em; opacity:.6; }
   .tt-download-arrow{ width:16px; height:16px; opacity:.4; flex-shrink:0; }
-
-  .tt-ad-box{ max-width:380px; text-align:center; }
-  .tt-ad-slot{ margin:16px 0; border-radius:12px; overflow:hidden; }
-  .tt-ad-placeholder{
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    padding:36px 16px; border-radius:12px; border:1.5px dashed rgba(255,255,255,.18);
-    background:rgba(255,255,255,.03); opacity:.6;
-  }
-  .tt-ad-placeholder .icon{ width:26px; height:26px; margin-bottom:4px; }
-  .tt-ad-placeholder small{ font-size:.78em; }
-
-  .tt-ad-timer{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:10px 0 18px; }
-  .tt-ad-timer-ring{ position:relative; width:70px; height:70px; }
-  .tt-ad-timer-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
-  .tt-ad-timer-ring circle{ fill:none; stroke-width:3; }
-  #ttAdRingBg{ stroke:rgba(255,255,255,.12); }
-  #ttAdRingFg{ stroke:#ec4899; stroke-linecap:round; stroke-dasharray:119.4; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
-  .tt-ad-timer-ring span{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:1.1em; font-weight:600;
-  }
-  #ttAdStatusText{ font-size:.85em; opacity:.7; }
-  #ttAdUnlockBtn{ width:100%; justify-content:center; }
-  .tt-ad-cancel{
-    display:block; width:100%; margin-top:10px; padding:10px; background:none; border:none;
-    color:inherit; opacity:.55; font-size:.85em; cursor:pointer;
-  }
 </style>
 
       </a>

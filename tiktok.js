@@ -1,17 +1,14 @@
 /* =========================================
    MIKI UNIVERSE — TikTok Downloader
-   3 mode: No Watermark biasa, No Watermark HD (gated iklan+timer),
-   dan Audio/MP3.
+   2 mode: No Watermark (HD) & Audio/MP3.
+   Langsung download, gak pake iklan/timer.
    ========================================= */
 
 (function () {
   const WORKER_URL = "https://miki-tiktok-proxy.mine14788.workers.dev";
-  const AD_WAIT_SECONDS = 30; // durasi wajib tunggu sebelum download HD kebuka
 
   let isProcessing = false;
-  let currentInfo = null; // { title, cover, author, normal, hd, audio }
-  let adTimerInterval = null;
-  let adUnlocked = false;
+  let currentInfo = null; // { title, cover, author, hd, audio }
 
   function $(id) { return document.getElementById(id); }
 
@@ -73,64 +70,12 @@
     a.remove();
   }
 
-  /* --- download langsung (No Watermark biasa & Audio) --- */
+  /* --- download langsung, gak ada gate apapun --- */
   function downloadTiktok(kind) {
     if (!currentInfo) return;
-    if (kind === "normal") triggerDownload(currentInfo.normal, "video");
+    if (kind === "hd") triggerDownload(currentInfo.hd, "video");
     else if (kind === "audio") triggerDownload(currentInfo.audio, "audio");
   }
 
-  /* --- gate iklan buat HD --- */
-  function openAdGate() {
-    if (!currentInfo?.hd) {
-      $("ttError").textContent = "Versi HD gak tersedia buat video ini.";
-      return;
-    }
-    adUnlocked = false;
-    $("ttAdUnlockBtn").disabled = true;
-    $("ttAdUnlockBtn").textContent = "Download Sekarang";
-    $("ttAdStatusText").textContent = "Mohon tunggu...";
-    window.openModal?.("ttAdModal");
-    document.body.style.overflow = "hidden";
-    startAdTimer();
-  }
-
-  function closeAdGate() {
-    window.closeModal?.("ttAdModal");
-    document.body.style.overflow = "";
-    if (adTimerInterval) clearInterval(adTimerInterval);
-  }
-
-  function startAdTimer() {
-    let remaining = AD_WAIT_SECONDS;
-    const circumference = 2 * Math.PI * 19; // r=19 di SVG ring
-    $("ttAdCountdown").textContent = remaining;
-    $("ttAdRingFg").style.strokeDasharray = circumference;
-    $("ttAdRingFg").style.strokeDashoffset = 0;
-
-    if (adTimerInterval) clearInterval(adTimerInterval);
-    adTimerInterval = setInterval(() => {
-      remaining--;
-      $("ttAdCountdown").textContent = Math.max(remaining, 0);
-      const progress = 1 - remaining / AD_WAIT_SECONDS;
-      $("ttAdRingFg").style.strokeDashoffset = circumference * progress;
-
-      if (remaining <= 0) {
-        clearInterval(adTimerInterval);
-        adUnlocked = true;
-        $("ttAdStatusText").textContent = "Selesai! Download udah kebuka.";
-        $("ttAdUnlockBtn").disabled = false;
-      }
-    }, 1000);
-  }
-
-  function confirmAdAndDownload() {
-    if (!adUnlocked || !currentInfo?.hd) return;
-    triggerDownload(currentInfo.hd, "video-hd");
-    closeAdGate();
-  }
-
-  Object.assign(window, {
-    runTiktokProcess, downloadTiktok, openAdGate, closeAdGate, confirmAdAndDownload
-  });
+  Object.assign(window, { runTiktokProcess, downloadTiktok });
 })();
