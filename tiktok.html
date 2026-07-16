@@ -354,6 +354,44 @@ function showMikiDebugBanner(msg){
   .tt-download-arrow{ width:16px; height:16px; opacity:.4; flex-shrink:0; }
 </style>
 
+<div class="bottom-nav">
+  <a href="/#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
+  <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
+  <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
+  <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
+    <button class="nav-item nav-button" type="button" onclick="openMorePopup()">
+    <svg class="icon" aria-hidden="true"><use href="#icon-ellipsis"></use></svg><span data-i18n="navMore">More</span>
+  </button>
+</div>
+
+
+<!-- MORE POPUP -->
+<div class="popup-overlay" id="morePopup">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closeMorePopup()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+    <h2><span data-i18n="moreTitle">More Menu</span></h2>
+    <p><span data-i18n="moreDesc">Pilih jenis testi.</span></p>
+    <div class="clean-more-list">
+      <a class="clean-more-card" href="/testi">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
+        <div>
+          <h3>Testi Order</h3>
+          <span>Lihat semua bukti order.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="/preset">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
+        <div>
+          <h3>Preset & Konten</h3>
+          <span>Preset, link CR, dan konten dari Miki.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg></span>
+        <div>
+          <h3>Order Cepat</h3>
+          <span>Langsung chat admin via WhatsApp.</span>
+        </div>
       </a>
       <a class="clean-more-card" href="/hdimage">
         <span class="icon-box" style="background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(99,102,241,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
