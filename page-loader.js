@@ -13,7 +13,7 @@
     el.id = "mikiPageLoader";
     el.innerHTML = `
       <div class="miki-loader-inner">
-        <img src="assets/miki-universe-logo.png" alt="" class="miki-loader-logo">
+        <span class="miki-loader-text">Miki Universe</span>
         <div class="miki-loader-ring"></div>
       </div>`;
     document.body.prepend(el);

@@ -62,9 +62,11 @@
       return;
     }
     const proxyUrl = `${WORKER_URL}?action=download&type=${type}&target=${encodeURIComponent(upstreamUrl)}`;
+    const randomId = Math.random().toString(36).slice(2, 8);
+    const ext = type === "audio" ? "mp3" : "mp4";
     const a = document.createElement("a");
     a.href = proxyUrl;
-    a.download = `tiktok-${type}.${type === "audio" ? "mp3" : "mp4"}`;
+    a.download = `MikiTiktok-${randomId}.${ext}`;
     document.body.appendChild(a);
     a.click();
     a.remove();

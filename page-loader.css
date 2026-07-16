@@ -22,11 +22,14 @@
   align-items: center;
   gap: 22px;
 }
-.miki-loader-logo {
-  height: 34px;
-  width: auto;
-  opacity: .92;
-  filter: drop-shadow(0 0 12px rgba(192,132,252,.35));
+.miki-loader-text {
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #fff;
+  opacity: .95;
+  letter-spacing: .3px;
+  text-shadow: 0 0 16px rgba(192,132,252,.4);
 }
 .miki-loader-ring {
   width: 34px;

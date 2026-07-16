@@ -154,12 +154,13 @@ export default {
         const contentType = upstream.headers.get("content-type") ||
           (type === "audio" ? "audio/mpeg" : "video/mp4");
         const ext = type === "audio" ? "mp3" : "mp4";
+        const randomId = Math.random().toString(36).slice(2, 8);
 
         return new Response(upstream.body, {
           status: 200,
           headers: {
             "Content-Type": contentType,
-            "Content-Disposition": `attachment; filename="tiktok-${type}.${ext}"`,
+            "Content-Disposition": `attachment; filename="MikiTiktok-${randomId}.${ext}"`,
             ...CORS_HEADERS
           }
         });
