@@ -43,15 +43,7 @@ function closeProfileModal() {
 function openAdminPanel() {
   if (window.__mikiAuthState.currentProfile?.role !== "admin") return;
   closeModal("profileModal");
-  $("adminResultBox").style.display = "none";
-  $("adminSearchError").textContent = "";
-  openModal("adminModal");
-  if (typeof window.adminLoadHdFeatureStatus === "function") {
-    window.adminLoadHdFeatureStatus();
-  } else {
-    const statusEl = $("adminHdFeatureStatus");
-    if (statusEl) statusEl.textContent = "Fitur HD Image: gagal dimuat (refresh halaman)";
-  }
+  window.location.href = "/admin";
 }
 function closeAdminModal() { closeModal("adminModal"); }
 
@@ -79,7 +71,7 @@ function cancelProfileEdit() {
 
 /* close modal when tapping the dark backdrop */
 document.addEventListener("DOMContentLoaded", () => {
-  ["authModal", "profileModal", "adminModal"].forEach(id => {
+  ["authModal", "profileModal"].forEach(id => {
     const el = $(id);
     if (el) el.addEventListener("click", (e) => { if (e.target === el) closeModal(id); });
   });

@@ -26,18 +26,18 @@ function showMikiDebugBanner(msg){
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Cek ID Game - Miki Universe</title>
+<title>Admin Panel - Miki Universe</title>
 <link rel="icon" href="assets/miki-universe-logo.png">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="page-loader.css">
 </head>
 <body
-  data-title-id="Cek ID Game"
-  data-title-en="Check Game ID"
-  data-title-ms="Cek ID Game"
-  data-desc-id="Cek nickname akun Mobile Legends pakai User ID & Server ID, gratis."
-  data-desc-en="Check your Mobile Legends nickname using User ID & Server ID, for free."
-  data-desc-ms="Semak nickname akaun Mobile Legends guna User ID & Server ID, percuma."
+  data-title-id="Admin Panel"
+  data-title-en="Admin Panel"
+  data-title-ms="Admin Panel"
+  data-desc-id="Panel khusus admin Miki Universe."
+  data-desc-en="Admin-only panel for Miki Universe."
+  data-desc-ms="Panel khas admin Miki Universe."
 >
 <script src="page-loader.js"></script>
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
@@ -198,46 +198,78 @@ function showMikiDebugBanner(msg){
   </div>
 </div>
 
-
 <section class="hero page-hero testi-hero-clean">
-  <h1 data-page-title>Cek ID Game</h1>
-  <p data-page-desc>Cek nickname akun Mobile Legends pakai User ID & Server ID, gratis.</p>
+  <h1 data-page-title>Admin Panel</h1>
+  <p data-page-desc>Panel khusus admin Miki Universe.</p>
 </section>
 
 <section class="hdpage-section" style="padding-top:8px">
-  <div class="cekid-card">
-    <div class="auth-field">
-      <label>User ID</label>
-      <input type="text" inputmode="numeric" id="cekidUserId" placeholder="Contoh: 1264042367">
-    </div>
-    <div class="auth-field">
-      <label>Server ID (Zone ID)</label>
-      <input type="text" inputmode="numeric" id="cekidServerId" placeholder="Contoh: 15139">
-    </div>
-    <p class="cekid-hint">User ID & Server ID keliatan di profil game lu (di bawah nickname, formatnya "UserID (ServerID)").</p>
 
-    <button class="btn hdpage-server-btn" type="button" id="cekidBtn" onclick="runCekId()">
-      <svg class="icon" aria-hidden="true"><use href="#icon-eye"></use></svg> Cek Nickname
-    </button>
+  <!-- GATE: ditampilin default (fail-closed) sampe kepastian role admin didapet -->
+  <div class="cekid-card" id="adminDenyGate" style="text-align:center">
+    <svg class="icon" aria-hidden="true" style="width:38px;height:38px;opacity:.6;margin-bottom:14px"><use href="#icon-shield"></use></svg>
+    <h3 style="margin-bottom:8px">Akses Ditolak</h3>
+    <p style="opacity:.7; font-size:.92em; line-height:1.6; margin-bottom:18px">Halaman ini cuma buat admin. Login pakai akun admin buat lanjut.</p>
+    <a class="btn hdpage-server-btn" href="/" style="width:100%; justify-content:center; text-decoration:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg> Kembali ke Beranda
+    </a>
+  </div>
 
-    <p class="auth-error" id="cekidError"></p>
+  <!-- MAIN: konten admin panel, cuma keliatan kalau role === admin -->
+  <div id="adminMain" style="display:none; max-width:420px; margin:0 auto">
 
-    <div class="cekid-loading" id="cekidLoading" style="display:none">
-      <div class="cekid-spinner"></div>
-      <span>Mencari nickname...</span>
-    </div>
+    <div class="cekid-card">
+      <p style="opacity:.75; font-size:.92em; margin-bottom:18px">Cari user pakai email buat kasih title atau jadiin admin.</p>
 
-    <div class="cekid-result" id="cekidResult" style="display:none">
-      <div class="cekid-result-icon">
-        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+      <div class="auth-field">
+        <label>Email User</label>
+        <input type="email" id="adminSearchEmail" placeholder="email@user.com">
       </div>
-      <h3 id="cekidResultName">-</h3>
-      <div class="cekid-result-rows">
-        <div class="cekid-result-row"><span>User ID</span><b id="cekidResultId">-</b></div>
-        <div class="cekid-result-row"><span>Server ID</span><b id="cekidResultServer">-</b></div>
-        <div class="cekid-result-row"><span>Region</span><b id="cekidResultRegion">-</b></div>
+      <button class="btn hdpage-server-btn" type="button" onclick="adminSearchUser()" style="width:100%; justify-content:center">Cari User</button>
+      <p class="auth-error" id="adminSearchError"></p>
+
+      <div class="admin-result" id="adminResultBox" style="display:none; margin-top:18px">
+        <div class="admin-result-user">
+          <img class="admin-result-avatar" id="adminResultAvatar" src="" alt="">
+          <div>
+            <div class="admin-result-name" id="adminResultName">-</div>
+            <div class="admin-result-email" id="adminResultEmail">-</div>
+          </div>
+        </div>
+        <div class="auth-field">
+          <label>Title</label>
+          <select id="adminTitleInput">
+            <option value="">Tidak ada / hapus title</option>
+            <option value="Admin">Admin</option>
+            <option value="Premium User">Premium User</option>
+            <option value="Top #1">Top #1</option>
+            <option value="Top #2">Top #2</option>
+            <option value="Top #3">Top #3</option>
+          </select>
+        </div>
+        <button class="btn admin-save-btn" type="button" onclick="adminSaveTitle()">Simpan Title</button>
+
+        <div class="admin-role-row">
+          <span id="adminRoleStatus">Role: user</span>
+          <button class="btn admin-role-btn" type="button" id="adminRoleBtn" onclick="adminToggleRole()">Jadikan Admin</button>
+        </div>
+
+        <div class="admin-role-row">
+          <span id="adminPremiumStatus">Premium: tidak</span>
+          <button class="btn admin-premium-btn" type="button" id="adminPremiumBtn" onclick="adminTogglePremium()">Aktifkan Premium</button>
+        </div>
       </div>
     </div>
+
+    <div class="cekid-card" style="margin-top:18px">
+      <h3 style="margin-bottom:8px">Fitur HD Image</h3>
+      <p style="margin-bottom:10px; opacity:.75; font-size:.9em">Matiin kalau lagi maintenance/update — user bakal liat halaman "Sedang Maintenance".</p>
+      <div class="admin-role-row">
+        <span id="adminHdFeatureStatus">Fitur HD Image: -</span>
+        <button class="btn admin-role-btn" type="button" id="adminHdFeatureBtn" onclick="adminToggleHdFeature()">-</button>
+      </div>
+    </div>
+
   </div>
 
   <style>
@@ -250,45 +282,13 @@ function showMikiDebugBanner(msg){
     }
     .cekid-card .auth-field{ margin-bottom:20px; }
     .cekid-card .auth-field label{ display:block; margin-bottom:8px; font-size:.92em; opacity:.85; }
-    .cekid-card .auth-field input{
+    .cekid-card .auth-field input, .cekid-card .auth-field select{
       width:100%; box-sizing:border-box; padding:13px 14px; font-size:1em;
     }
-    .cekid-hint{
-      font-size:.82em; opacity:.6; line-height:1.6;
-      margin:2px 0 22px;
-    }
-    .cekid-card #cekidBtn{ width:100%; justify-content:center; }
-    .cekid-card #cekidError{ margin-top:12px; }
-    .cekid-loading{
-      display:flex; align-items:center; gap:10px; justify-content:center;
-      margin-top:18px; font-size:.9em; opacity:.8;
-    }
-    .cekid-spinner{
-      width:18px; height:18px; border-radius:50%;
-      border:2px solid rgba(255,255,255,.2); border-top-color:#c084fc;
-      animation:cekidSpin .7s linear infinite;
-    }
-    @keyframes cekidSpin{ to{ transform:rotate(360deg); } }
-    .cekid-result{
-      margin-top:22px; padding:20px 18px; border-radius:14px; text-align:center;
-      background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(236,72,153,.08));
-      border:1px solid rgba(192,132,252,.35);
-    }
-    .cekid-result-icon{
-      width:42px; height:42px; margin:0 auto 12px; border-radius:50%;
-      background:linear-gradient(135deg,#4ade80,#22c55e);
-      display:flex; align-items:center; justify-content:center;
-    }
-    .cekid-result-icon .icon{ width:22px; height:22px; color:#fff; }
-    .cekid-result h3{ font-size:1.25em; margin-bottom:16px; word-break:break-word; line-height:1.4; }
-    .cekid-result-rows{ display:flex; flex-direction:column; gap:10px; text-align:left; }
-    .cekid-result-row{
-      display:flex; justify-content:space-between; align-items:center; font-size:.9em;
-      padding:10px 14px; border-radius:9px; background:rgba(255,255,255,.04);
-    }
-    .cekid-result-row span{ opacity:.65; }
+    #adminMain .admin-save-btn{ width:100%; justify-content:center; margin-bottom:18px; }
   </style>
 </section>
+
 
 
 <!-- BOTTOM NAV -->
@@ -388,7 +388,7 @@ function showMikiDebugBanner(msg){
 <script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
 <script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
-<script src="cekid.js"></script>
+<script src="admin.js"></script>
 <script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
 </body>
 </html>

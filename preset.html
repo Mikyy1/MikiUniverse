@@ -198,63 +198,6 @@ function showMikiDebugBanner(msg){
   </div>
 </div>
 
-<!-- ADMIN MODAL -->
-<div class="popup-overlay" id="adminModal">
-  <div class="popup-box admin-box">
-    <button class="popup-close" onclick="closeAdminModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
-    <h2>Admin Panel</h2>
-    <p>Cari user pakai email buat kasih title atau jadiin admin.</p>
-
-    <div class="auth-field">
-      <label>Email User</label>
-      <input type="email" id="adminSearchEmail" placeholder="email@user.com">
-    </div>
-    <button class="btn admin-search-btn" type="button" onclick="adminSearchUser()">Cari User</button>
-    <p class="auth-error" id="adminSearchError"></p>
-
-    <div class="admin-result" id="adminResultBox" style="display:none">
-      <div class="admin-result-user">
-        <img class="admin-result-avatar" id="adminResultAvatar" src="" alt="">
-        <div>
-          <div class="admin-result-name" id="adminResultName">-</div>
-          <div class="admin-result-email" id="adminResultEmail">-</div>
-        </div>
-      </div>
-      <div class="auth-field">
-        <label>Title</label>
-        <select id="adminTitleInput">
-          <option value="">Tidak ada / hapus title</option>
-          <option value="Admin">Admin</option>
-          <option value="Premium User">Premium User</option>
-          <option value="Top #1">Top #1</option>
-          <option value="Top #2">Top #2</option>
-          <option value="Top #3">Top #3</option>
-        </select>
-      </div>
-      <button class="btn admin-save-btn" type="button" onclick="adminSaveTitle()">Simpan Title</button>
-
-      <div class="admin-role-row">
-        <span id="adminRoleStatus">Role: user</span>
-        <button class="btn admin-role-btn" type="button" id="adminRoleBtn" onclick="adminToggleRole()">Jadikan Admin</button>
-      </div>
-
-      <div class="admin-role-row">
-        <span id="adminPremiumStatus">Premium: tidak</span>
-        <button class="btn admin-premium-btn" type="button" id="adminPremiumBtn" onclick="adminTogglePremium()">Aktifkan Premium</button>
-      </div>
-    </div>
-
-    <hr style="border-color:rgba(255,255,255,.1); margin:18px 0">
-    <h3 style="margin-bottom:8px">Fitur HD Image</h3>
-    <p style="margin-bottom:10px; opacity:.75; font-size:.9em">Matiin kalau lagi maintenance/update — user bakal liat halaman "Sedang Maintenance".</p>
-    <div class="admin-role-row">
-      <span id="adminHdFeatureStatus">Fitur HD Image: -</span>
-      <button class="btn admin-role-btn" type="button" id="adminHdFeatureBtn" onclick="adminToggleHdFeature()">-</button>
-    </div>
-  </div>
-</div>
-
-
 <section class="hero page-hero testi-hero-clean">
   <h1 data-page-title>Preset & Konten</h1>
   <p data-page-desc>Kumpulan preset, link CR, dan konten yang pernah Miki bikin/kontenin.</p>
