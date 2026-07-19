@@ -102,9 +102,25 @@ async function ensureUserDoc(user, opts = {}) {
   }
 
   const data = snap.data();
+  // Bootstrap-admin auto re-elevate. INI SENGAJA DIBUNGKUS try/catch SENDIRI:
+  // kalau akun ini kebetulan lagi role "user" (misal abis di-demote lewat Admin
+  // Panel), Firestore Security Rules yang bener SEHARUSNYA nolak user biasa
+  // nulis field role ke dirinya sendiri (biar gak bisa self-promote jadi admin).
+  // Kalau updateDoc ini gak di-try/catch terpisah, error "Missing or
+  // insufficient permissions" dari sini bakal ngebubble ke atas dan
+  // nge-block SELURUH proses login. Jadi: coba re-elevate, tapi kalau gagal,
+  // diem aja dan lanjut login sebagai user biasa — jangan sampe nge-block login.
   if (isBootstrapAdmin && data.role !== "admin") {
-    await updateDoc(ref, { role: "admin", updatedAt: serverTimestamp() });
-    data.role = "admin";
+    try {
+      await updateDoc(ref, { role: "admin", updatedAt: serverTimestamp() });
+      data.role = "admin";
+    } catch (_) {
+      // Firestore Rules nolak (biasanya karena rules emang didesain gak
+      // ngebolehin user nulis role sendiri). Kalau ini kejadian ke email
+      // yang emang seharusnya admin, angkat manual lewat Firebase Console
+      // (Firestore > users > <uid> > set field role = "admin"), itu bypass
+      // Rules karena akses dari Console pake hak owner project, bukan client SDK.
+    }
   }
   return data;
 }
