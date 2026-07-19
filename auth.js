@@ -458,6 +458,13 @@ async function hdIncrementUsage() {
 }
 
 /* ---------- HD Image maintenance toggle (settings/features di Firestore) ---------- */
+// State asli disimpen di sini, JANGAN baca dari text tombol lagi —
+// sebelumnya adminToggleHdFeature() nebak status dari btn.textContent,
+// jadi kalau label belum sempat ke-load (masih "-" default dari HTML)
+// atau elemennya kepencet cepet, tombol selalu ngira "lagi Aktif" dan
+// cuma nge-set hdImageEnabled: true terus, gak pernah bisa dimatiin.
+let hdFeatureEnabledState = null;
+
 async function hdCheckFeatureEnabled() {
   try {
     const snap = await getDoc(doc(db, "settings", "features"));
@@ -474,26 +481,36 @@ async function adminLoadHdFeatureStatus() {
   const label = $("adminHdFeatureStatus");
   const btn = $("adminHdFeatureBtn");
   if (!label || !btn) return;
+  label.textContent = "Fitur HD Image: memuat...";
+  btn.disabled = true;
   const enabled = await hdCheckFeatureEnabled();
+  hdFeatureEnabledState = enabled;
   label.textContent = "Fitur HD Image: " + (enabled ? "Aktif" : "Maintenance");
   btn.textContent = enabled ? "Matiin (Maintenance)" : "Nyalain Lagi";
+  btn.disabled = false;
 }
 
 async function adminToggleHdFeature() {
   const label = $("adminHdFeatureStatus");
   const btn = $("adminHdFeatureBtn");
   if (!label || !btn) return;
-  const turningOff = btn.textContent === "Matiin (Maintenance)";
+  // Kalau state belum pernah ke-load (misal user klik cepet banget), tarik dulu status asli dari Firestore.
+  if (hdFeatureEnabledState === null) await adminLoadHdFeatureStatus();
+  const turningOff = hdFeatureEnabledState === true;
+  btn.disabled = true;
   try {
     await setDoc(doc(db, "settings", "features"), {
       hdImageEnabled: !turningOff,
       updatedAt: serverTimestamp(),
       updatedBy: window.__mikiAuthState?.currentUser?.email || null
     }, { merge: true });
+    hdFeatureEnabledState = !turningOff;
     label.textContent = "Fitur HD Image: " + (turningOff ? "Maintenance" : "Aktif");
     btn.textContent = turningOff ? "Nyalain Lagi" : "Matiin (Maintenance)";
   } catch (e) {
     alert("Gagal ubah status fitur HD Image. Cek Firestore Rules lu (butuh akses tulis ke settings/features).");
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -544,6 +561,26 @@ async function logoutUser() {
 function closeModalSafe(id) { $(id)?.classList.remove("active"); }
 
 /* ---------- admin panel ---------- */
+// Isi <select id="adminTitleInput"> sesuai title user yang lagi dibuka.
+// Kalau title lama-nya custom (gak ada di 5 opsi tetap), jangan di-blank-in
+// diem-diem — tambahin sebagai opsi sementara biar admin sadar & bisa milih ganti.
+function setAdminTitleSelectValue(title) {
+  const sel = $("adminTitleInput");
+  if (!sel) return;
+  const val = title || "";
+  const oldCustom = sel.querySelector('option[data-custom="1"]');
+  if (oldCustom) oldCustom.remove();
+  const exists = Array.from(sel.options).some(o => o.value === val);
+  if (val && !exists) {
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = val + " (title lama/custom)";
+    opt.dataset.custom = "1";
+    sel.appendChild(opt);
+  }
+  sel.value = val;
+}
+
 async function adminSearchUser() {
   const email = $("adminSearchEmail").value.trim();
   const errEl = $("adminSearchError");
@@ -564,7 +601,7 @@ async function adminSearchUser() {
     const avatarImg = $("adminResultAvatar");
     avatarImg.src = data.photoURL || "";
     avatarImg.style.visibility = data.photoURL ? "visible" : "hidden";
-    $("adminTitleInput").value = data.title || "";
+    $("adminTitleInput") && setAdminTitleSelectValue(data.title);
     $("adminRoleStatus").textContent = "Role: " + (data.role || "user");
     $("adminRoleBtn").textContent = data.role === "admin" ? "Cabut Admin" : "Jadikan Admin";
     $("adminPremiumStatus").textContent = "Premium: " + (data.premium ? "ya" : "tidak");

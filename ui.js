@@ -46,7 +46,12 @@ function openAdminPanel() {
   $("adminResultBox").style.display = "none";
   $("adminSearchError").textContent = "";
   openModal("adminModal");
-  window.adminLoadHdFeatureStatus?.();
+  if (typeof window.adminLoadHdFeatureStatus === "function") {
+    window.adminLoadHdFeatureStatus();
+  } else {
+    const statusEl = $("adminHdFeatureStatus");
+    if (statusEl) statusEl.textContent = "Fitur HD Image: gagal dimuat (refresh halaman)";
+  }
 }
 function closeAdminModal() { closeModal("adminModal"); }
 

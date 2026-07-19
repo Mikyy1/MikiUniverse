@@ -221,8 +221,15 @@ function showMikiDebugBanner(msg){
         </div>
       </div>
       <div class="auth-field">
-        <label>Title (kosongkan buat hapus)</label>
-        <input type="text" id="adminTitleInput" placeholder="contoh: Top 1 Langganan" maxlength="40">
+        <label>Title</label>
+        <select id="adminTitleInput">
+          <option value="">Tidak ada / hapus title</option>
+          <option value="Admin">Admin</option>
+          <option value="Premium User">Premium User</option>
+          <option value="Top #1">Top #1</option>
+          <option value="Top #2">Top #2</option>
+          <option value="Top #3">Top #3</option>
+        </select>
       </div>
       <button class="btn admin-save-btn" type="button" onclick="adminSaveTitle()">Simpan Title</button>
 
