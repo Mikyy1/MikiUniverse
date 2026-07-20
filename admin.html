@@ -2,27 +2,169 @@
 <html lang="id">
 <head>
 <script>
-/* ===== TEMPORARY DEBUG BANNER — hapus ini setelah bug login ketemu ===== */
-window.addEventListener('error', function(e){
-  showMikiDebugBanner('JS Error: ' + (e.message || 'unknown') + '\n@ ' + (e.filename||'?') + ':' + (e.lineno||'?'));
-});
-window.addEventListener('unhandledrejection', function(e){
-  var r = e.reason;
-  showMikiDebugBanner('Promise Error: ' + (r && (r.message || r.code || r) || 'unknown'));
-});
-function showMikiDebugBanner(msg){
-  var el = document.getElementById('mikiDebugBanner');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'mikiDebugBanner';
-    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;word-break:break-word;max-height:45vh;overflow-y:auto;';
-    document.documentElement.appendChild(el);
+/* =========================================================
+   MIKI UNIVERSE — Live Console (khusus /admin)
+   Nangkep semua console.log/info/warn/error + JS error +
+   Promise error, terus ditampilin real-time di panel yang
+   bisa dibuka/tutup. Biar kelihatan errornya dimana pas
+   ngetes langsung dari HP tanpa perlu USB debugging.
+   ========================================================= */
+(function () {
+  var MAX_LOGS = 300;
+  var logs = [];
+  var panelEl, listEl, toggleBtn, badgeEl;
+  var unreadCount = 0;
+  var isOpen = false;
+
+  var LEVEL_COLOR = { log: "#e5e7eb", info: "#60a5fa", warn: "#fde68a", error: "#fca5a5" };
+  var LEVEL_LABEL = { log: "LOG", info: "INFO", warn: "WARN", error: "ERROR" };
+
+  function fmt(args) {
+    return Array.prototype.map.call(args, function (a) {
+      if (a instanceof Error) return a.stack || a.message;
+      if (typeof a === "object" && a !== null) {
+        try { return JSON.stringify(a); } catch (_) { return String(a); }
+      }
+      return String(a);
+    }).join(" ");
   }
-  var line = document.createElement('div');
-  line.style.cssText = 'margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:6px;white-space:pre-wrap;';
-  line.textContent = msg;
-  el.appendChild(line);
-}
+
+  function addLog(level, msg) {
+    var entry = { level: level, msg: msg, time: new Date() };
+    logs.push(entry);
+    if (logs.length > MAX_LOGS) logs.shift();
+    if (listEl) renderEntry(entry);
+    if (!isOpen && level !== "log") { unreadCount++; updateBadge(); }
+  }
+
+  function renderEntry(entry) {
+    var row = document.createElement("div");
+    row.style.cssText = "padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.08);white-space:pre-wrap;word-break:break-word;font-family:monospace;font-size:11.5px;line-height:1.5;color:" + LEVEL_COLOR[entry.level] + ";";
+    var hh = entry.time.toTimeString().slice(0, 8);
+    var head = document.createElement("div");
+    head.style.cssText = "opacity:.6;font-weight:700;margin-bottom:2px;";
+    head.textContent = hh + " · " + LEVEL_LABEL[entry.level];
+    var body = document.createElement("div");
+    body.textContent = entry.msg;
+    row.appendChild(head);
+    row.appendChild(body);
+    listEl.appendChild(row);
+    listEl.scrollTop = listEl.scrollHeight;
+  }
+
+  function updateBadge() {
+    if (!badgeEl) return;
+    if (unreadCount > 0) {
+      badgeEl.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+      badgeEl.style.display = "flex";
+    } else {
+      badgeEl.style.display = "none";
+    }
+  }
+
+  function mkBtn(label, onClick) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.style.cssText = "background:rgba(255,255,255,.08);color:#e5e7eb;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 10px;font:600 11px monospace;cursor:pointer;";
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function openPanel() {
+    isOpen = true;
+    panelEl.style.display = "flex";
+    unreadCount = 0;
+    updateBadge();
+  }
+  function closePanel() {
+    isOpen = false;
+    panelEl.style.display = "none";
+  }
+
+  function buildUI() {
+    toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.textContent = "</>";
+    toggleBtn.setAttribute("aria-label", "Buka Live Console");
+    toggleBtn.style.cssText = "position:fixed;left:16px;bottom:96px;z-index:999998;width:46px;height:46px;border-radius:50%;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.18);font:700 13px monospace;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.45);cursor:pointer;";
+
+    badgeEl = document.createElement("span");
+    badgeEl.style.cssText = "position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#dc2626;color:#fff;font:700 10px sans-serif;display:none;align-items:center;justify-content:center;";
+    toggleBtn.appendChild(badgeEl);
+
+    panelEl = document.createElement("div");
+    panelEl.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:999997;max-height:55vh;background:#0b0f17;border-top:1px solid rgba(255,255,255,.15);display:none;flex-direction:column;";
+
+    var header = document.createElement("div");
+    header.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);flex-wrap:wrap;gap:8px;";
+    var title = document.createElement("b");
+    title.style.cssText = "color:#fff;font:700 12.5px monospace;letter-spacing:.02em;";
+    title.textContent = "🔴 LIVE CONSOLE";
+
+    var actions = document.createElement("div");
+    actions.style.cssText = "display:flex;gap:8px;";
+    actions.appendChild(mkBtn("Clear", function () { logs = []; listEl.innerHTML = ""; }));
+    var copyBtn = mkBtn("Copy", function () {
+      var text = logs.map(function (e) {
+        return e.time.toTimeString().slice(0, 8) + " [" + LEVEL_LABEL[e.level] + "] " + e.msg;
+      }).join("\n");
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () {
+          copyBtn.textContent = "Copied!";
+          setTimeout(function () { copyBtn.textContent = "Copy"; }, 1200);
+        });
+      }
+    });
+    actions.appendChild(copyBtn);
+    actions.appendChild(mkBtn("Tutup", closePanel));
+
+    header.appendChild(title);
+    header.appendChild(actions);
+
+    listEl = document.createElement("div");
+    listEl.style.cssText = "overflow-y:auto;flex:1;";
+
+    panelEl.appendChild(header);
+    panelEl.appendChild(listEl);
+
+    document.documentElement.appendChild(toggleBtn);
+    document.documentElement.appendChild(panelEl);
+
+    toggleBtn.addEventListener("click", function () { isOpen ? closePanel() : openPanel(); });
+
+    // render log yang udah kejaring sebelum panel-nya sempet dibangun
+    logs.forEach(renderEntry);
+  }
+
+  ["log", "info", "warn", "error"].forEach(function (level) {
+    var orig = console[level] ? console[level].bind(console) : function () {};
+    console[level] = function () {
+      addLog(level, fmt(arguments));
+      orig.apply(console, arguments);
+    };
+  });
+
+  window.addEventListener("error", function (e) {
+    addLog("error", "JS Error: " + (e.message || "unknown") + "\n@ " + (e.filename || "?") + ":" + (e.lineno || "?"));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason;
+    addLog("error", "Promise Error: " + (r && (r.message || r.code || r) || "unknown"));
+  });
+
+  // dipanggil manual dari onerror="" tag <script> pas file gagal dimuat (404/network)
+  window.showMikiDebugBanner = function (msg) {
+    addLog("error", msg);
+    if (panelEl) openPanel(); // langsung buka panel, ini biasanya fatal (script gak kemuat)
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", buildUI);
+  } else {
+    buildUI();
+  }
+})();
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
