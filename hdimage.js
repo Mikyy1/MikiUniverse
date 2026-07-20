@@ -300,7 +300,17 @@
 
     } catch (err) {
       console.error("HD upscale exception:", err);
-      progress.error();
+      // Buat pesan error lebih spesifik berdasarkan tahap mana yang gagal
+      let detailMsg = err.message;
+      if (detailMsg.includes("captcha")) {
+        progress.error("Captcha gagal");
+      } else if (detailMsg.includes("upload")) {
+        progress.error("Upload foto gagal");
+      } else if (detailMsg.includes("Upscale")) {
+        progress.error("Server upscale lagi down, coba lagi nanti");
+      } else {
+        progress.error("Gagal: " + detailMsg.slice(0, 50));
+      }
       $("hdError").textContent = err.name === "TimeoutError" ? "Timeout. Coba lagi." : genericErrorMessage();
       $("hdError").style.color = "";
     } finally {
