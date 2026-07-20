@@ -55,7 +55,7 @@
     try {
       const res = await fetch(`${WORKER_URL}?action=captcha-challenge`, { signal: AbortSignal.timeout(15000) });
       const challenge = await res.json();
-      if (!res.ok || !challenge?.salt) throw new Error("Gagal ambil soal captcha");
+      if (!res.ok || !challenge?.salt) throw new Error(challenge?.error || `Gagal ambil soal captcha (HTTP ${res.status})`);
       captchaChallenge = challenge;
 
       // Cari nonce lewat brute-force ringan (proof-of-work).
@@ -72,6 +72,7 @@
       captchaSolution = nonce;
       setCaptchaVisual("verified");
     } catch (e) {
+      console.error("HD captcha gagal:", e.message || e);
       captchaChallenge = null;
       captchaSolution = null;
       setCaptchaVisual("error");
