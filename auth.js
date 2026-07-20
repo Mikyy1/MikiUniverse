@@ -488,7 +488,8 @@ async function hdCheckFeatureEnabled() {
     // Kalau dokumennya belum pernah dibikin, defaultnya NYALA.
     if (!data || typeof data.hdImageEnabled === "undefined") return true;
     return !!data.hdImageEnabled;
-  } catch (_) {
+  } catch (e) {
+    console.error("hdCheckFeatureEnabled gagal:", e);
     return true; // fail open — kalau Firestore lagi kenapa-kenapa, jangan sampe nge-block user
   }
 }
@@ -524,6 +525,7 @@ async function adminToggleHdFeature() {
     label.textContent = "Fitur HD Image: " + (turningOff ? "Maintenance" : "Aktif");
     btn.textContent = turningOff ? "Nyalain Lagi" : "Matiin (Maintenance)";
   } catch (e) {
+    console.error("adminToggleHdFeature gagal:", e);
     alert("Gagal ubah status fitur HD Image. Cek Firestore Rules lu (butuh akses tulis ke settings/features).");
   } finally {
     btn.disabled = false;
