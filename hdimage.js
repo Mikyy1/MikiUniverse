@@ -272,8 +272,11 @@
         const blob = await res.blob();
         resultUrl = URL.createObjectURL(blob);
       } else {
-        // Gagal — apapun detail errornya di server, ke user cuma pesan generic.
-        // Detail asli (nama API, status code, dll) sengaja gak diteruskan ke sini.
+        // Gagal — pesan ke USER sengaja generic, tapi detail aslinya tetep
+        // di-log ke console biar keliatan di Live Console admin.
+        let detail = `HTTP ${res.status}`;
+        try { detail += " — " + JSON.stringify(await res.json()); } catch (_) {}
+        console.error("HD upscale gagal:", detail);
         throw new Error(genericErrorMessage());
       }
 
@@ -296,6 +299,7 @@
       setTimeout(() => { $("hdError").textContent = ""; $("hdError").style.color = ""; }, 4000);
 
     } catch (err) {
+      console.error("HD upscale exception:", err);
       progress.error();
       $("hdError").textContent = err.name === "TimeoutError" ? "Timeout. Coba lagi." : genericErrorMessage();
       $("hdError").style.color = "";
