@@ -1,360 +1,435 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HD Image Upscaler — Wink.ai</title>
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      color: #fff;
-    }
-
-    .container {
-      max-width: 560px;
-      width: 100%;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 24px;
-      padding: 36px 32px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-    }
-
-    /* Header */
-    .header { text-align: center; margin-bottom: 28px; }
-    .header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #c084fc, #818cf8, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 6px;
-    }
-    .header p { font-size: 13px; color: rgba(255,255,255,0.5); }
-
-    /* Upload Area */
-    .upload-area {
-      border: 2px dashed rgba(192,132,252,0.3);
-      border-radius: 16px;
-      padding: 36px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: 20px;
-      position: relative;
-    }
-    .upload-area:hover { border-color: rgba(192,132,252,0.6); background: rgba(192,132,252,0.04); }
-    .upload-area.dragover { border-color: #c084fc; background: rgba(192,132,252,0.1); }
-    .upload-area .icon { font-size: 44px; margin-bottom: 10px; }
-    .upload-area .text { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
-    .upload-area .hint { font-size: 12px; color: rgba(255,255,255,0.4); }
-    .upload-area input[type="file"] { display: none; }
-
-    /* Preview */
-    .preview { display: none; text-align: center; margin-bottom: 20px; position: relative; }
-    .preview.active { display: block; }
-    .preview img {
-      max-width: 100%;
-      max-height: 260px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .preview .remove-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(0,0,0,0.6);
-      border: none;
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-    .preview .remove-btn:hover { background: rgba(239,68,68,0.8); }
-    .preview .file-info {
-      margin-top: 8px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-    }
-
-    /* Mode Selector */
-    .mode-selector {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .mode-option {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.04);
-      border: 2px solid rgba(255,255,255,0.1);
-      cursor: pointer;
-      transition: all 0.25s;
-      user-select: none;
-    }
-    .mode-option:hover { border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.04); }
-    .mode-option.selected { border-color: #c084fc; background: rgba(192,132,252,0.12); }
-    .mode-option input { display: none; }
-    .mode-option .mode-label { font-size: 14px; font-weight: 500; }
-    .mode-option.selected .mode-label { color: #c084fc; font-weight: 600; }
-    .mode-option .mode-desc { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
-    .mode-option.selected .mode-desc { color: rgba(192,132,252,0.7); }
-    .mode-text { text-align: center; }
-
-    /* Generate Button */
-    .gen-btn {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #c084fc, #818cf8);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    .gen-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(192,132,252,0.35); }
-    .gen-btn:active:not(:disabled) { transform: translateY(0); }
-    .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    /* Progress Bar */
-    .progress-wrap {
-      display: none;
-      margin-bottom: 20px;
-    }
-    .progress-wrap.active { display: block; }
-    .progress-bar-bg {
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #c084fc, #818cf8);
-      border-radius: 3px;
-      width: 0%;
-      transition: width 0.5s ease;
-    }
-    .progress-text {
-      text-align: center;
-      font-size: 13px;
-      color: rgba(255,255,255,0.6);
-    }
-
-    /* Loading */
-    .loading { display: none; text-align: center; padding: 32px 16px; }
-    .loading.active { display: block; }
-    .spinner {
-      width: 44px; height: 44px;
-      border: 4px solid rgba(192,132,252,0.2);
-      border-top-color: #c084fc;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 14px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading .load-text { font-size: 14px; color: rgba(255,255,255,0.6); }
-    .loading .load-sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
-
-    /* Error */
-    .error-box {
-      display: none;
-      padding: 14px 16px;
-      border-radius: 12px;
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.25);
-      color: #fca5a5;
-      font-size: 13px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-    .error-box.active { display: block; }
-
-    /* Result */
-    .result { display: none; text-align: center; }
-    .result.active { display: block; }
-    .result img {
-      max-width: 100%;
-      max-height: 360px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      margin-bottom: 12px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .result img:hover { transform: scale(1.02); }
-    .result .result-info {
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 16px;
-    }
-    .result-actions { display: flex; gap: 10px; }
-    .dl-btn, .again-btn {
-      flex: 1;
-      padding: 14px 20px;
-      border-radius: 12px;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .dl-btn {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #fff;
-    }
-    .dl-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.35); }
-    .again-btn {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.8);
-      border: 1px solid rgba(255,255,255,0.15);
-    }
-    .again-btn:hover { background: rgba(255,255,255,0.12); }
-
-    /* Footer */
-    .footer {
-      text-align: center;
-      margin-top: 24px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 11px;
-      color: rgba(255,255,255,0.25);
-    }
-
-    /* Fullscreen modal */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      z-index: 999;
-      align-items: center;
-      justify-content: center;
-      cursor: zoom-out;
-    }
-    .modal.active { display: flex; }
-    .modal img {
-      max-width: 95vw;
-      max-height: 95vh;
-      border-radius: 8px;
-    }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-      .container { padding: 28px 20px; border-radius: 20px; }
-      .header h1 { font-size: 24px; }
-      .mode-selector { flex-direction: column; }
-      .result-actions { flex-direction: column; }
-    }
-  </style>
+<script>
+/* ===== TEMPORARY DEBUG BANNER — hapus ini setelah bug login ketemu ===== */
+window.addEventListener('error', function(e){
+  showMikiDebugBanner('JS Error: ' + (e.message || 'unknown') + '\n@ ' + (e.filename||'?') + ':' + (e.lineno||'?'));
+});
+window.addEventListener('unhandledrejection', function(e){
+  var r = e.reason;
+  showMikiDebugBanner('Promise Error: ' + (r && (r.message || r.code || r) || 'unknown'));
+});
+function showMikiDebugBanner(msg){
+  var el = document.getElementById('mikiDebugBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'mikiDebugBanner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;word-break:break-word;max-height:45vh;overflow-y:auto;';
+    document.documentElement.appendChild(el);
+  }
+  var line = document.createElement('div');
+  line.style.cssText = 'margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:6px;white-space:pre-wrap;';
+  line.textContent = msg;
+  el.appendChild(line);
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HD Image - Miki Universe</title>
+<link rel="icon" href="assets/miki-universe-logo.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="page-loader.css">
 </head>
-<body>
+<body
+  data-title-id="HD Image"
+  data-title-en="HD Image"
+  data-title-ms="HD Image"
+  data-desc-id="Perjelas dan perbesar foto pakai AI, gratis."
+  data-desc-en="Enhance and upscale your photos with AI, for free."
+  data-desc-ms="Tingkatkan dan besarkan foto anda dengan AI, percuma."
+>
+<script src="page-loader.js"></script>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
+<symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="4.2" ry="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6"/></symbol>
+<symbol id="icon-check" viewBox="0 0 24 24"><polyline points="4 13 9 18 20 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-xmark" viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+<symbol id="icon-fire" viewBox="0 0 24 24"><path d="M12 22c4.4 0 8-3.2 8-7.6 0-3-1.8-5-3.4-6.6.4 1.6-.2 2.8-1 3.4.2-3-1.2-6-4.1-8.2.6 2.4-.4 4-2 5.6C7.8 10 6 12 6 14.4 6 18.8 7.6 22 12 22z" fill="currentColor"/></symbol>
+<symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="12 7 12 12 16 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-eye" viewBox="0 0 24 24"><path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+<symbol id="icon-comment" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="3" fill="currentColor"/><polygon points="7,17 7,22 12,17" fill="currentColor"/></symbol>
+<symbol id="icon-message" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="7,17 7,22 12,17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="icon-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.3" fill="currentColor"/><circle cx="18" cy="5" r="2.3" fill="currentColor"/><circle cx="18" cy="19" r="2.3" fill="currentColor"/><line x1="8" y1="11" x2="16" y2="6.3" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="16" y2="17.7" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="icon-external" viewBox="0 0 24 24"><path d="M14 4h6v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="20" y1="4" x2="10" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 14v6H4V6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-tiktok" viewBox="0 0 24 24"><path d="M16 3c.3 2 1.8 3.6 4 4v3a7 7 0 0 1-4-1.3V15a5 5 0 1 1-5-5c.3 0 .7 0 1 .1v3.1a2 2 0 1 0 2 2V3h2z" fill="currentColor"/></symbol>
+<symbol id="icon-whatsapp" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.94 14.46L2 22l5.69-1.49A10 10 0 1 0 12 2z" fill="currentColor"/></symbol>
+<symbol id="icon-instagram" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/></symbol>
+<symbol id="icon-bullhorn" viewBox="0 0 24 24"><path d="M3 10v4a1 1 0 0 0 1 1h2l5 4V5L6 9H4a1 1 0 0 0-1 1z" fill="currentColor"/><path d="M14 5a8 8 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M14 8.5a4.5 4.5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="icon-gem" viewBox="0 0 24 24"><path d="M6.5 3h11l3.5 5.5L12 21.5 2 8.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 3 8 8.5l4 13 4-13-1.5-5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="8.5" x2="22" y2="8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="icon-gamepad" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.2 10.2v4M5.2 12.2h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="10.8" r="1.05" fill="currentColor"/><circle cx="18.3" cy="13.1" r="1.05" fill="currentColor"/></symbol>
+<symbol id="icon-house" viewBox="0 0 24 24"><path d="M3 11.5 12 3l9 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10.3V20a1 1 0 0 0 1 1h3v-6.2h5V21h3a1 1 0 0 0 1-1v-9.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-circle-user" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9.8" r="3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5.8 18c1-2.6 3.1-4.1 6.2-4.1s5.2 1.5 6.2 4.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="icon-ellipsis" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></symbol>
+<symbol id="icon-images" viewBox="0 0 24 24"><rect x="6" y="4" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="8" width="15" height="13" rx="2" fill="currentColor"/></symbol>
+<symbol id="icon-rotate-right" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="20 3 20 8 15 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-rotate" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.8-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="18 2.5 18 6.5 14 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.8 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="6 21.5 6 17.5 10 17.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-left-right" viewBox="0 0 24 24"><polyline points="7 7 3 12 7 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 7 21 12 17 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="icon-bolt" viewBox="0 0 24 24"><polygon points="13 2 4 14 11 14 10 22 20 10 13 10 13 2" fill="currentColor"/></symbol>
+<symbol id="icon-wand" viewBox="0 0 24 24"><line x1="4" y1="20" x2="14" y2="10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M16 2.5 17 5 19.5 6 17 7 16 9.5 15 7 12.5 6 15 5z" fill="currentColor"/><path d="M20.2 8 20.8 9.3 22 9.8 20.8 10.3 20.2 11.6 19.6 10.3 18.4 9.8 19.6 9.3z" fill="currentColor"/></symbol>
+<symbol id="icon-shield-heart" viewBox="0 0 24 24"><path d="M12 2 20 5.2V11c0 6-3.6 9.6-8 11-4.4-1.4-8-5-8-11V5.2z" fill="currentColor"/><path d="M12 16.3c-2.5-1.5-3.9-2.9-3.9-4.5 0-1.1.8-1.9 1.8-1.9.8 0 1.5.5 2.1 1.3.6-.8 1.3-1.3 2.1-1.3 1 0 1.8.8 1.8 1.9 0 1.6-1.4 3-3.9 4.5z" fill="#000" fill-opacity=".5"/></symbol>
+<symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c1.3-4 4.2-6 8-6s6.7 2 8 6" fill="currentColor"/></symbol>
+<symbol id="icon-google" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/><text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">G</text></symbol>
+<symbol id="icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="icon-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" fill="currentColor"/><circle cx="12" cy="13.5" r="3.4" fill="#000" fill-opacity=".45"/></symbol>
+<symbol id="icon-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4.2L15.6 5.2a1.4 1.4 0 012 0l1.2 1.2a1.4 1.4 0 010 2L8.2 19 4 20z" fill="currentColor"/></symbol>
+<symbol id="icon-crown" viewBox="0 0 24 24"><path d="M3 9l4 3 5-6 5 6 4-3-2 10H5L3 9z" fill="currentColor"/></symbol>
+<symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 2 20 5.2V11c0 6-3.6 9.6-8 11-4.4-1.4-8-5-8-11V5.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+<symbol id="icon-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 00-1 1v14a1 1 0 001 1h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="icon-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></symbol>
+</svg>
 
-<div class="container">
-  <div class="header">
-    <h1>✨ HD Image Upscaler</h1>
-    <p>Powered by Wink.ai • No Watermark • No Credit</p>
+
+<div class="particle-bg">
+  <span></span><span></span><span></span><span></span>
+  <span></span><span></span><span></span><span></span>
+</div>
+
+<header>
+  <a class="logo logo-img" href="/">
+    <img src="assets/miki-universe-logo.png" alt="Miki Universe Logo">
+  </a>
+  <nav>
+    <a href="/#top" data-i18n="headerNavTop">Top</a>
+    <a href="/#service" data-i18n="headerNavService">Service</a>
+    <a href="/#why-order" data-i18n="headerNavWhy">Why</a>
+    <a href="/#contact" data-i18n="headerNavSocial">Social</a>
+    <a href="/preset" class="desktop-only-link" data-i18n="navPreset">Preset</a>
+    <a href="/hdimage" class="desktop-only-link">HD Image</a>
+    <a href="/cekid" class="desktop-only-link">Cek ID</a>
+    <a href="/tiktok" class="desktop-only-link">TikTok DL</a>
+  </nav>
+  <div class="header-actions">
+    <button class="lang-btn" type="button" onclick="toggleLangMenu()">
+      <svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg>
+    </button>
+    <button class="lang-btn account-btn" type="button" id="accountBtn" onclick="onAccountBtnClick()">
+      <svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg>
+    </button>
+  </div>
+</header>
+
+<div class="lang-menu" id="langMenu">
+  <button onclick="setLanguage('id')"><span>🇮🇩</span> id-ID <svg class="icon lang-check id-check" aria-hidden="true"><use href="#icon-check"></use></svg></button>
+  <button onclick="setLanguage('en')"><span>🇬🇧</span> en-GB <svg class="icon lang-check en-check" aria-hidden="true"><use href="#icon-check"></use></svg></button>
+  <button onclick="setLanguage('ms')"><span>🇲🇾</span> ms-MY <svg class="icon lang-check ms-check" aria-hidden="true"><use href="#icon-check"></use></svg></button>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="popup-overlay" id="authModal">
+  <div class="popup-box auth-box">
+    <button class="popup-close" onclick="closeAuthModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+    <h2>Masuk ke Miki Universe</h2>
+    <p>Pilih cara masuk buat akses profil & fitur lu.</p>
+
+    <div class="auth-buttons-new">
+      <button class="auth-google-new" type="button" onclick="loginGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Lanjutkan dengan Google
+      </button>
+
+      <div class="auth-divider"><span>atau</span></div>
+
+      <button class="auth-guest-new" type="button" onclick="loginGuest()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor"/>
+          <path d="M4 20c1.3-4 4.2-6 8-6s6.7 2 8 6" fill="currentColor"/>
+        </svg>
+        Lanjut sebagai Tamu
+      </button>
+
+      <p class="auth-error" id="googleAuthError"></p>
+      <p class="auth-error" id="guestAuthError"></p>
+      <p class="auth-hint">Tamu punya profil sendiri tapi nggak sinkron ke device lain.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- PROFILE MODAL -->
+<div class="popup-overlay" id="profileModal">
+  <div class="popup-box profile-box">
+    <button class="popup-close" onclick="closeProfileModal()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+
+    <div class="profile-avatar-wrap">
+      <img class="profile-avatar" id="profileAvatarImg" src="" alt="Avatar" style="display:none">
+      <svg class="icon profile-avatar-fallback" id="profileAvatarFallback" aria-hidden="true"><use href="#icon-circle-user"></use></svg>
+      <button class="profile-avatar-edit" id="profileAvatarEditBtn" type="button" onclick="document.getElementById('profileAvatarFile').click()" style="display:none">
+        <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
+      </button>
+      <input type="file" id="profileAvatarFile" accept="image/*" style="display:none" onchange="onAvatarFileChange(event)">
+    </div>
+
+    <div class="profile-title-badge" id="profileTitleBadge" style="display:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-crown"></use></svg>
+      <span id="profileTitleText"></span>
+    </div>
+
+    <h2 class="profile-name" id="profileNameView">-</h2>
+    <input class="profile-name-input" id="profileNameInput" type="text" maxlength="24" style="display:none">
+
+    <p class="profile-meta" id="profileMetaText">-</p>
+
+    <div class="profile-role-badge" id="profileRoleBadge" style="display:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg> Admin
+    </div>
+
+    <div class="profile-premium-badge" id="profilePremiumBadge" style="display:none">
+      <svg class="icon" aria-hidden="true"><use href="#icon-crown"></use></svg> Premium Member
+    </div>
+
+    <p class="auth-error" id="profileError"></p>
+
+    <div class="profile-actions">
+      <button class="btn profile-edit-btn" id="profileEditBtn" type="button" onclick="toggleProfileEdit()">
+        <svg class="icon" aria-hidden="true"><use href="#icon-pencil"></use></svg> Edit Profil
+      </button>
+      <button class="btn profile-save-btn" id="profileSaveBtn" type="button" onclick="saveProfile()" style="display:none">Simpan</button>
+      <button class="btn profile-admin-btn" id="profileAdminBtn" type="button" onclick="openAdminPanel()" style="display:none">Buka Admin Panel</button>
+      <button class="btn profile-logout-btn" type="button" onclick="logoutUser()">
+        <svg class="icon" aria-hidden="true"><use href="#icon-logout"></use></svg> Logout
+      </button>
+    </div>
+  </div>
+</div>
+
+<section class="hero page-hero testi-hero-clean">
+  <h1 data-page-title>HD Image</h1>
+  <p data-page-desc>Perjelas dan perbesar foto pakai AI, gratis.</p>
+</section>
+
+<section class="hdpage-section">
+  <!-- LOGIN GATE -->
+  <div id="hdLoginGate" class="hdpage-gate-locked" style="display:none">
+    <div class="hdpage-gate-blur-bg">
+      <svg class="icon hdpage-lock-icon" aria-hidden="true"><use href="#icon-shield"></use></svg>
+      <h3>Login Dulu Bang</h3>
+      <p>Fitur HD Image <b>gratis 5x/day</b>, hanya bisa diakses pakai login Google</p>
+      <p class="hdpage-gate-sub">Ini buat menjaga kualitas layanan & mencegah penyalahgunaan.</p>
+      <button class="auth-google-new hdpage-gate-btn" type="button" onclick="openAuthModal()">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Login dengan Google
+      </button>
+    </div>
   </div>
 
-  <!-- Upload -->
-  <div class="upload-area" id="uploadArea">
-    <div class="icon">📸</div>
-    <div class="text">Klik atau drag & drop gambar</div>
-    <div class="hint">Max 10MB • JPG, PNG, WebP</div>
-    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+  <!-- MAINTENANCE GATE (muncul kalau admin matiin fitur HD Image) -->
+  <div id="hdMaintenanceGate" class="hdpage-gate-locked" style="display:none">
+    <div class="hdpage-gate-blur-bg">
+      <svg class="icon hdpage-lock-icon" aria-hidden="true"><use href="#icon-tools"></use></svg>
+      <h3>Sedang Maintenance</h3>
+      <p>Fitur HD Image lagi diupdate/diperbaiki sama admin.</p>
+      <p class="hdpage-gate-sub">Coba lagi beberapa saat lagi ya.</p>
+    </div>
   </div>
 
-  <!-- Preview -->
-  <div class="preview" id="preview">
-    <img id="previewImg" src="" alt="Preview">
-    <button class="remove-btn" id="removeBtn" title="Hapus gambar">✕</button>
-    <div class="file-info" id="fileInfo"></div>
-  </div>
-
-  <!-- Mode Selector -->
-  <div class="mode-selector" id="modeSelector">
-    <label class="mode-option selected" data-mode="uhd">
-      <input type="radio" name="mode" value="uhd" checked>
-      <div class="mode-text">
-        <div class="mode-label">🔥 Ultra HD</div>
-        <div class="mode-desc">4K+ • Kualitas tertinggi</div>
+  <!-- MAIN TOOL -->
+  <div id="hdMain" style="display:none">
+    <div class="hdpage-upload-area" id="hdUploadArea" onclick="document.getElementById('hdFileInput').click()">
+      <img id="hdPreviewImg" style="display:none" alt="">
+      <div id="hdUploadHint">
+        <svg class="icon" aria-hidden="true"><use href="#icon-camera"></use></svg>
+        <span>Ketuk buat pilih foto</span>
       </div>
-    </label>
-    <label class="mode-option" data-mode="hd">
-      <input type="radio" name="mode" value="hd">
-      <div class="mode-text">
-        <div class="mode-label">✨ HD</div>
-        <div class="mode-desc">2K • Lebih cepat</div>
-      </div>
-    </label>
-  </div>
+    </div>
+    <input type="file" id="hdFileInput" accept="image/*" style="display:none">
 
-  <!-- Generate -->
-  <button class="gen-btn" id="genBtn" disabled>
-    🚀 Generate HD Image
+    <div class="hdpage-servers" id="hdServers" style="display:none">
+      <div id="hdTurnstileWrap" style="display:flex;justify-content:center;margin-bottom:14px">
+        <div id="hdCaptchaBox" class="hd-captcha-box" onclick="startHdCaptcha()">
+          <div id="hdCaptchaCheckbox" class="hd-captcha-checkbox">
+            <svg class="hd-captcha-check-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="hd-captcha-spinner"></div>
+          </div>
+          <span id="hdCaptchaLabel" class="hd-captcha-label">Klik buat verifikasi</span>
+        </div>
+      </div>
+      <style>
+        .hd-captcha-box{
+          display:flex; align-items:center; gap:12px;
+          padding:12px 18px; border-radius:14px; cursor:pointer; user-select:none;
+          background:rgba(255,255,255,.05);
+          border:1px solid rgba(255,255,255,.12);
+          backdrop-filter:blur(10px);
+          transition:border-color .2s ease, background .2s ease;
+        }
+        .hd-captcha-box:hover{ border-color:rgba(192,132,252,.5); }
+        .hd-captcha-box.is-verified{ border-color:rgba(74,222,128,.5); background:rgba(74,222,128,.08); }
+        .hd-captcha-box.is-error{ border-color:rgba(248,113,113,.6); background:rgba(248,113,113,.08); }
+        .hd-captcha-checkbox{
+          position:relative; width:26px; height:26px; border-radius:7px; flex-shrink:0;
+          border:2px solid rgba(255,255,255,.35);
+          display:flex; align-items:center; justify-content:center;
+          background:linear-gradient(135deg, rgba(168,85,247,.15), rgba(236,72,153,.15));
+          transition:border-color .2s ease, background .2s ease;
+        }
+        .hd-captcha-check-icon{ width:16px; height:16px; color:#fff; opacity:0; transform:scale(.5); transition:all .25s ease; }
+        .hd-captcha-box.is-verified .hd-captcha-checkbox{ border-color:#4ade80; background:linear-gradient(135deg,#4ade80,#22c55e); }
+        .hd-captcha-box.is-verified .hd-captcha-check-icon{ opacity:1; transform:scale(1); }
+        .hd-captcha-spinner{
+          position:absolute; width:16px; height:16px; border-radius:50%;
+          border:2px solid rgba(255,255,255,.25); border-top-color:#c084fc;
+          display:none; animation:hdCaptchaSpin .7s linear infinite;
+        }
+        .hd-captcha-box.is-verifying .hd-captcha-spinner{ display:block; }
+        .hd-captcha-box.is-verifying .hd-captcha-checkbox{ border-color:#c084fc; }
+        @keyframes hdCaptchaSpin{ to{ transform:rotate(360deg); } }
+        .hd-captcha-label{ font-size:.92em; opacity:.85; }
+      </style>
+      <button class="btn hdpage-server-btn" type="button" id="hdGenerateBtn" onclick="runHdUpscale()" disabled>
+        <svg class="icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> Generate
+      </button>
+    </div>
+
+    <div class="hdpage-loading" id="hdLoading" style="display:none">
+      <div class="hdpage-loading-info">
+        <span id="hdLoadingLabel">Mengupload foto...</span>
+        <span id="hdLoadingPct">0%</span>
+      </div>
+      <div class="hdpage-progress-track">
+        <div class="hdpage-progress-bar" id="hdProgressBar"></div>
+      </div>
+    </div>
+
+    <p class="auth-error" id="hdError"></p>
+
+    <div class="hdpage-result" id="hdResult" style="display:none">
+      <p class="hdpage-result-label">Geser buat lihat perbedaan Before → After HD:</p>
+      <div class="hd-slider-wrap">
+        <div class="hd-slider-inner" id="hdSliderInner">
+          <img class="hd-slider-img hd-before-img" id="hdBeforeImg" alt="Before">
+          <div class="hd-after-wrap" id="hdAfterWrap">
+            <img class="hd-slider-img hd-after-img" id="hdAfterImg" alt="After HD">
+          </div>
+          <div class="hd-slider-divider" id="hdSliderDivider"></div>
+          <div class="hd-slider-label hd-label-left">BEFORE</div>
+          <div class="hd-slider-label hd-label-right">AFTER HD</div>
+          <div class="hd-slider-handle" id="hdSliderHandle">
+            <svg class="icon" aria-hidden="true"><use href="#icon-left-right"></use></svg>
+          </div>
+          <input type="range" class="hd-slider-range" id="hdSliderRange" min="0" max="100" value="50">
+        </div>
+      </div>
+      <a class="btn hdpage-download-btn" id="hdDownloadBtn" target="_blank" download>
+        <svg class="icon" aria-hidden="true"><use href="#icon-external"></use></svg> Download Hasil HD
+      </a>
+      <button class="btn hdpage-retry-btn" type="button" onclick="hdReset()">Upscale Foto Lain</button>
+    </div>
+  </div>
+</section>
+
+<footer>© 2026 Miki Edit</footer>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <a href="/#top" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gem"></use></svg><span data-i18n="navTop">Top</span></a>
+  <a href="/#service" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg><span data-i18n="navService">Service</span></a>
+  <a href="/" class="home"><svg class="icon" aria-hidden="true"><use href="#icon-house"></use></svg></a>
+  <a href="/#contact" class="nav-item"><svg class="icon" aria-hidden="true"><use href="#icon-circle-user"></use></svg><span data-i18n="navSocial">Social</span></a>
+    <button class="nav-item nav-button" type="button" onclick="openMorePopup()">
+    <svg class="icon" aria-hidden="true"><use href="#icon-ellipsis"></use></svg><span data-i18n="navMore">More</span>
   </button>
+</div>
 
-  <!-- Error -->
-  <div class="error-box" id="errorBox"></div>
 
-  <!-- Loading -->
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div class="load-text" id="loadText">Memproses gambar...</div>
-    <div class="load-sub" id="loadSub">Mohon tunggu, jangan tutup halaman ini</div>
-  </div>
-
-  <!-- Progress -->
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-bar-bg">
-      <div class="progress-bar-fill" id="progressBar"></div>
+<!-- MORE POPUP -->
+<div class="popup-overlay" id="morePopup">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closeMorePopup()"><svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg></button>
+    <h2><span data-i18n="moreTitle">More Menu</span></h2>
+    <p><span data-i18n="moreDesc">Pilih jenis testi.</span></p>
+    <div class="clean-more-list">
+      <a class="clean-more-card" href="/testi">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-images"></use></svg></span>
+        <div>
+          <h3>Testi Order</h3>
+          <span>Lihat semua bukti order.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="/preset">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
+        <div>
+          <h3>Preset & Konten</h3>
+          <span>Preset, link CR, dan konten dari Miki.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank">
+        <span class="icon-box"><svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg></span>
+        <div>
+          <h3>Order Cepat</h3>
+          <span>Langsung chat admin via WhatsApp.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="/hdimage">
+        <span class="icon-box" style="background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(99,102,241,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-wand"></use></svg></span>
+        <div>
+          <h3>HD Image</h3>
+          <span>Perjelas foto pakai AI — gratis, 3 server.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="/cekid">
+        <span class="icon-box" style="background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(168,85,247,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-gamepad"></use></svg></span>
+        <div>
+          <h3>Cek ID Game</h3>
+          <span>Cek nickname ML pakai User ID & Server ID.</span>
+        </div>
+      </a>
+      <a class="clean-more-card" href="/tiktok">
+        <span class="icon-box" style="background:linear-gradient(135deg,rgba(236,72,153,.18),rgba(139,92,246,.12))"><svg class="icon" aria-hidden="true"><use href="#icon-tiktok"></use></svg></span>
+        <div>
+          <h3>TikTok Downloader</h3>
+          <span>No watermark, HD, atau MP3 — gratis.</span>
+        </div>
+      </a>
     </div>
-    <div class="progress-text" id="progressText">Mengupload gambar...</div>
   </div>
+</div>
 
-  <!-- Result -->
-  <div class="result" id="result">
-    <img id="resultImg" src="" alt="HD Result" title="Klik untuk zoom">
-    <div class="result-info" id="resultInfo"></div>
-    <div class="result-actions">
-      <a class="dl-btn" id="dlBtn" href="#" download>💾 Download</a>
-      <button class="again-btn" id="againBtn">🔄 Lagi</button>
+<!-- MIKI AI CHAT — harus di dalam body, bukan head -->
+<button class="miki-ai-bubble" id="mikiAiBubble" type="button" onclick="openMikiAi()">
+  <svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>
+  <span>Chat</span>
+</button>
+
+<div class="miki-ai-panel" id="mikiAiPanel" aria-hidden="true">
+  <div class="miki-ai-header">
+    <div class="miki-ai-title">
+      <svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>
+      <strong>Miki Ai</strong>
+      <span class="verified-badge"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg> Verified</span>
+    </div>
+    <div class="miki-ai-header-actions">
+      <button type="button" onclick="resetMikiAi()" aria-label="Refresh chat">
+        <svg class="icon" aria-hidden="true"><use href="#icon-rotate-right"></use></svg>
+      </button>
+      <button type="button" onclick="closeMikiAi()" aria-label="Close chat">
+        <svg class="icon" aria-hidden="true"><use href="#icon-xmark"></use></svg>
+      </button>
     </div>
   </div>
+  <div class="miki-ai-messages" id="mikiAiMessages"></div>
+  <a class="miki-ai-wa" href="https://wa.me/6285174229436?text=Halo%20kak%20mau%20order%20edit" target="_blank" rel="noopener">
+    <svg class="icon" aria-hidden="true"><use href="#icon-whatsapp"></use></svg>
+    <span>Open WhatsApp</span>
+  </a>
+</div>
 
-  <div class="footer">
-    Wink
+<script src="data.js" onerror="showMikiDebugBanner(&quot;data.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="script.js" onerror="showMikiDebugBanner(&quot;script.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="ui.js" onerror="showMikiDebugBanner(&quot;ui.js GAGAL DIMUAT (404?)&quot;)"></script>
+<script src="hdimage.js"></script>
+<script type="module" src="auth.js" onerror="showMikiDebugBanner(&quot;auth.js GAGAL DIMUAT — 404 atau network error&quot;)"></script>
+</body>
+</html>
