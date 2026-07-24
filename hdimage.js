@@ -1,11 +1,9 @@
 /* =========================================
-   MIKI UNIVERSE — HD Image Page
-   + Captcha custom (proof-of-work, gak pake layanan pihak ketiga)
-   + Cek maintenance flag dari admin panel
-   + Error yang ditampilin ke user digenericin (gak bocorin detail server)
+   MIKI UNIVERSE — HD Image Page (dengan Mode HD/UHD)
    ========================================= */
 
 (function () {
+  // GANTI URL INI DENGAN URL WORKER KAMU!
   const WORKER_URL = "https://miki-hd-proxy.mine14788.workers.dev";
   const DAILY_LIMIT = 5;
 
@@ -14,22 +12,22 @@
   let isProcessing = false;
   let progressInterval = null;
   let sliderInited = false;
-  let featureEnabled = true; // default nyala, dicek ulang ke Firestore pas init
+  let featureEnabled = true;
 
-  let captchaChallenge = null;   // { salt, timestamp, difficulty, signature }
-  let captchaSolution = null;    // nonce hasil hitungan
+  let captchaChallenge = null;
+  let captchaSolution = null;
   let captchaBusy = false;
 
   function $(id) { return document.getElementById(id); }
 
-  /* --- util hash, sama persis kayak yang dipake worker biar hasilnya nyambung --- */
+  /* --- Hash --- */
   async function sha256Hex(str) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
   }
 
+  /* --- Captcha UI --- */
   function setCaptchaVisual(state) {
-    // state: "idle" | "verifying" | "verified" | "error"
     const box = $("hdCaptchaBox");
     const label = $("hdCaptchaLabel");
     if (!box || !label) return;
@@ -49,7 +47,7 @@
   }
 
   async function startHdCaptcha() {
-    if (captchaBusy || captchaSolution) return; // udah verified atau lagi proses, gak usah diulang
+    if (captchaBusy || captchaSolution) return;
     captchaBusy = true;
     setCaptchaVisual("verifying");
     try {
@@ -58,8 +56,6 @@
       if (!res.ok || !challenge?.salt) throw new Error(challenge?.error || `Gagal ambil soal captcha (HTTP ${res.status})`);
       captchaChallenge = challenge;
 
-      // Cari nonce lewat brute-force ringan (proof-of-work).
-      // Di-yield tiap 500 percobaan biar UI/browser gak nge-freeze.
       const prefix = "0".repeat(challenge.difficulty || 4);
       let nonce = 0;
       while (true) {
@@ -88,7 +84,7 @@
     btn.disabled = isProcessing || !captchaSolution;
   }
 
-  /* --- gate: cek login (wajib Google) + cek maintenance flag --- */
+  /* --- Gate Login --- */
   async function refreshGate() {
     const user = window.__mikiAuthState?.currentUser;
     const profile = window.__mikiAuthState?.currentProfile;
@@ -97,8 +93,6 @@
     const main = $("hdMain");
     if (!gate || !main || !maintGate) return;
 
-    // Cek maintenance flag dulu (berlaku buat semua orang termasuk admin,
-    // biar admin juga bisa mastiin tampilan yang dilihat user awam)
     featureEnabled = await window.hdCheckFeatureEnabled?.() ?? true;
     if (!featureEnabled) {
       gate.style.display = "none";
@@ -108,7 +102,6 @@
     }
     maintGate.style.display = "none";
 
-    // Hanya izinkan user Google (bukan anonymous/guest)
     const isGoogle = user && !user.isAnonymous && profile?.provider === "google";
     if (isGoogle) {
       gate.style.display = "none";
@@ -119,7 +112,7 @@
     }
   }
 
-  /* --- file pilih --- */
+  /* --- File Pilih --- */
   function onFileSelected(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -139,7 +132,7 @@
     reader.readAsDataURL(file);
   }
 
-  /* --- progress bar --- */
+  /* --- Progress --- */
   function startProgress(phase1Label, phase2Label) {
     const loading = $("hdLoading");
     const bar = $("hdProgressBar");
@@ -172,7 +165,7 @@
     };
   }
 
-  /* --- slider (dipanggil SEKALI setelah kedua gambar siap) --- */
+  /* --- Slider --- */
   function initSlider(beforeSrc, afterSrc) {
     if (sliderInited) return;
     const beforeImg = $("hdBeforeImg");
@@ -217,12 +210,11 @@
     }
   }
 
-  /* --- pesan error generic buat user, detail asli cuma dikonsol dev (bukan production) --- */
   function genericErrorMessage() {
     return "Gagal memproses gambar. Coba lagi beberapa saat.";
   }
 
-  /* --- main --- */
+  /* --- MAIN: Run Upscale --- */
   async function runHdUpscale() {
     if (isProcessing) return;
     if (!featureEnabled) { await refreshGate(); return; }
@@ -245,35 +237,38 @@
     $("hdError").textContent = "";
     $("hdResult").style.display = "none";
 
+    // Ambil mode yang dipilih user
+    const modeSelect = document.getElementById("hdModeSelect");
+    const selectedMode = modeSelect ? modeSelect.value : "uhd";
+
     const progress = startProgress(
-      `Mengupload foto... (Sisa hari ini: ${DAILY_LIMIT - usedCount - 1}x)`,
-      `Memproses HD...`
+      `Mengupload foto... (Mode: ${selectedMode.toUpperCase()})`,
+      `Memproses ${selectedMode.toUpperCase()}... (30-120s)`
     );
 
     try {
       const form = new FormData();
       form.append("image", selectedFile, selectedFile.name || "image.jpg");
       form.append("filename", selectedFile.name || "image.jpg");
+      form.append("mode", selectedMode); // <-- KIRIM MODE KE WORKER
       form.append("captchaSalt", captchaChallenge.salt);
       form.append("captchaTimestamp", String(captchaChallenge.timestamp));
       form.append("captchaSignature", captchaChallenge.signature);
       form.append("captchaNonce", String(captchaSolution));
+      
       setTimeout(() => progress.phase2(), 2000);
 
       const res = await fetch(WORKER_URL, {
         method: "POST", body: form,
-        signal: AbortSignal.timeout(120000)
+        signal: AbortSignal.timeout(180000) // 3 menit untuk UHD
       });
 
       const contentType = res.headers.get("content-type") || "";
       let resultUrl;
       if (res.ok && contentType.startsWith("image/")) {
-        // Sukses: worker balikin bytes gambar langsung
         const blob = await res.blob();
         resultUrl = URL.createObjectURL(blob);
       } else {
-        // Gagal — pesan ke USER sengaja generic, tapi detail aslinya tetep
-        // di-log ke console biar keliatan di Live Console admin.
         let detail = `HTTP ${res.status}`;
         try { detail += " — " + JSON.stringify(await res.json()); } catch (_) {}
         console.error("HD upscale gagal:", detail);
@@ -295,27 +290,16 @@
 
       const remaining = DAILY_LIMIT - usedCount - 1;
       $("hdError").style.color = remaining <= 1 ? "#f59e0b" : "#22c55e";
-      $("hdError").textContent = `Berhasil! Sisa pemakaian hari ini: ${remaining}x`;
-      setTimeout(() => { $("hdError").textContent = ""; $("hdError").style.color = ""; }, 4000);
+      $("hdError").textContent = `✅ Berhasil! Sisa hari ini: ${remaining}x | Mode: ${selectedMode.toUpperCase()}`;
+      setTimeout(() => { $("hdError").textContent = ""; $("hdError").style.color = ""; }, 5000);
 
     } catch (err) {
       console.error("HD upscale exception:", err);
-      // Buat pesan error lebih spesifik berdasarkan tahap mana yang gagal
-      let detailMsg = err.message;
-      if (detailMsg.includes("captcha")) {
-        progress.error("Captcha gagal");
-      } else if (detailMsg.includes("upload")) {
-        progress.error("Upload foto gagal");
-      } else if (detailMsg.includes("Upscale")) {
-        progress.error("Server upscale lagi down, coba lagi nanti");
-      } else {
-        progress.error("Gagal: " + detailMsg.slice(0, 50));
-      }
-      $("hdError").textContent = err.name === "TimeoutError" ? "Timeout. Coba lagi." : genericErrorMessage();
+      $("hdError").textContent = err.name === "TimeoutError" ? "⏱️ Timeout. Coba lagi." : genericErrorMessage();
       $("hdError").style.color = "";
     } finally {
       isProcessing = false;
-      resetCaptcha(); // captcha sekali pakai, wajib solve ulang tiap generate
+      resetCaptcha();
     }
   }
 
@@ -332,10 +316,64 @@
     resetCaptcha();
   }
 
-  /* --- init --- */
+  /* --- INIT --- */
   document.addEventListener("DOMContentLoaded", () => {
     const fileInput = $("hdFileInput");
     if (fileInput) fileInput.addEventListener("change", onFileSelected);
+
+    // === INJECT DROPDOWN MODE ===
+    const serversDiv = $("hdServers");
+    const generateBtn = $("hdGenerateBtn");
+    if (serversDiv && generateBtn) {
+      // Cek apakah dropdown sudah ada, kalau belum buat
+      if (!document.getElementById("hdModeSelect")) {
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = "display:flex; flex-direction:column; gap:8px; width:100%; margin-bottom:12px;";
+        
+        const label = document.createElement("label");
+        label.htmlFor = "hdModeSelect";
+        label.textContent = "Pilih Kualitas:";
+        label.style.cssText = "font-size:0.9rem; opacity:0.8; font-weight:500;";
+        
+        const select = document.createElement("select");
+        select.id = "hdModeSelect";
+        select.style.cssText = `
+          padding: 12px 16px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.15);
+          color: #fff;
+          font-size: 1rem;
+          font-weight: 500;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          background-size: 18px;
+          padding-right: 40px;
+        `;
+        
+        const optHd = document.createElement("option");
+        optHd.value = "hd";
+        optHd.textContent = "✨ HD (2K) — Lebih Cepat";
+        
+        const optUhd = document.createElement("option");
+        optUhd.value = "uhd";
+        optUhd.textContent = "🔥 Ultra HD (4K+) — Kualitas Maksimal";
+        optUhd.selected = true;
+        
+        select.appendChild(optHd);
+        select.appendChild(optUhd);
+        
+        wrapper.appendChild(label);
+        wrapper.appendChild(select);
+        
+        // Sisipkan sebelum tombol Generate
+        serversDiv.insertBefore(wrapper, generateBtn);
+      }
+    }
 
     window.__mikiOnAuthChange = refreshGate;
     refreshGate();
